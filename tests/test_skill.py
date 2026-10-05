@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 from gamerhq_skill_recurring_posts import (
     CREATE_API,
+    DESCRIBE_API,
     DELETE_API,
     GET_API,
     HANDLER_ID,
@@ -10,6 +11,7 @@ from gamerhq_skill_recurring_posts import (
     MIN_INTERVAL_SECONDS,
     SET_ACTIVE_API,
     UPDATE_API,
+    VALIDATE_API,
     RecurringPostsSkill,
 )
 
@@ -141,8 +143,102 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tuple(scheduler.handlers), (HANDLER_ID,))
         self.assertEqual(
             set(management.handlers),
-            {LIST_API, GET_API, CREATE_API, UPDATE_API, SET_ACTIVE_API, DELETE_API},
+            {LIST_API, GET_API, CREATE_API, DESCRIBE_API, VALIDATE_API, UPDATE_API, SET_ACTIVE_API, DELETE_API},
         )
+
+    async def test_describe_exposes_host_neutral_ux_constraints(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+
+        self.assertEqual(result["limits"]["intervalMinMinutes"], 15)
+        self.assertEqual(result["limits"]["maxPosts"], 20)
+        self.assertEqual(
+            result["schedules"]["interval"]["fields"]["minutes"]["label"],
+            "Every N minutes (min. 15)",
+        )
+        self.assertEqual(result["recommendedFlow"], ["review", "validate", "confirm"])
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.audit.calls, [])
+
+    async def test_validate_returns_preview_without_persisting_or_scheduling(self):
+        result = await self.skill._manage_validate(
+            self.ctx,
+            {
+                "name": "Rules reminder",
+                "channelId": 10,
+                "content": "Please remember the rules.",
+                "schedule": {"type": "interval", "seconds": 30 * 60},
+                "active": False,
+            },
+        )
+
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["preview"]["status"], "paused")
+        self.assertEqual(result["preview"]["scheduleSummary"], "Every 30 minutes")
+        self.assertNotIn("id", result["preview"])
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.audit.calls, [])
+
+    async def test_validate_reuses_existing_active_state_for_edit_preview(self):
+        post = await self.create(active=False)
+
+        result = await self.skill._manage_validate(
+            self.ctx,
+            {
+                "postId": post.id,
+                "name": "Edited reminder",
+                "channelId": 10,
+                "content": "Edited content.",
+                "schedule": {
+                    "type": "weekly",
+                    "weekday": 0,
+                    "hour": 9,
+                    "minute": 5,
+                    "timezone": "Europe/Berlin",
+                },
+            },
+        )
+
+        self.assertEqual(result["preview"]["id"], post.id)
+        self.assertEqual(result["preview"]["status"], "paused")
+        self.assertEqual(
+            result["preview"]["scheduleSummary"],
+            "Monday at 09:05 (Europe/Berlin)",
+        )
+
+    async def test_validate_enforces_interval_minimum_without_side_effects(self):
+        with self.assertRaisesRegex(ValueError, "at least 15 minutes"):
+            await self.skill._manage_validate(
+                self.ctx,
+                {
+                    "name": "Too frequent",
+                    "channelId": 10,
+                    "content": "No.",
+                    "schedule": {"type": "interval", "seconds": 14 * 60},
+                },
+            )
+
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.audit.calls, [])
+
+    async def test_create_can_start_paused_and_returns_readable_status(self):
+        result = await self.skill._manage_create(
+            self.ctx,
+            {
+                "name": "Draft post",
+                "channelId": 10,
+                "content": "Not live yet.",
+                "schedule": {"type": "interval", "seconds": MIN_INTERVAL_SECONDS},
+                "active": False,
+            },
+        )
+
+        self.assertFalse(result["post"]["active"])
+        self.assertEqual(result["post"]["status"], "paused")
+        self.assertEqual(result["post"]["scheduleSummary"], "Every 15 minutes")
+        self.assertEqual(self.scheduler.jobs, {})
 
     async def test_management_contracts_drive_crud_without_private_host_access(self):
         created = await self.skill._manage_create(
