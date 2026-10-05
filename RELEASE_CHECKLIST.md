@@ -25,7 +25,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 
 ## Contracts
 
-- [ ] Management API IDs remain versioned and documented, including `recurring-posts.update.v1`.
+- [ ] Management API IDs remain versioned and documented, including `recurring-posts.describe.v1`, `recurring-posts.validate.v1` and `recurring-posts.update.v1`.
 - [ ] Event IDs remain versioned and documented.
 - [ ] Breaking payload/behavior changes use a new contract version.
 
@@ -34,6 +34,8 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Static source audit passes.
 - [ ] Package metadata/manifest consistency passes.
 - [ ] Offline unit tests pass.
+- [ ] Describe/validate UX APIs are read-only and produce no storage, Scheduler or audit side effects.
+- [ ] UX metadata still exposes the 15-minute interval minimum and exact schedule payload fields.
 - [ ] Python 3.12 CI passes.
 - [ ] Python 3.14 CI passes.
 - [ ] No Discord token or production state is required by tests.
@@ -51,6 +53,8 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Existing configuration is visible.
 - [ ] Existing scheduled job survives restart.
 - [ ] Existing `posts.v1` data loads without migration.
+- [ ] Review the create form constraints from `recurring-posts.describe.v1`.
+- [ ] Validate a harmless draft and confirm no post/job is created.
 - [ ] Create one harmless recurring post.
 - [ ] Edit its name/message/schedule and confirm the post ID and `post:<post-id>` job key stay unchanged.
 - [ ] Confirm the interval UI communicates the 15-minute minimum once the host UI contract/integration supports it.
