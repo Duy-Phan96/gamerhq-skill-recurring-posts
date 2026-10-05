@@ -52,6 +52,8 @@ The Skill optimizes for a review-first administrative flow:
 7. Common interval choices are exposed as presets, but presets never replace the
    underlying generic schedule contract.
 8. Destructive deletion is preceded by a read-only impact preview.
+9. The list contract returns UI-ready summaries and actions so hosts do not need
+   to infer Skill behavior from raw storage-shaped fields.
 
 `recurring-posts.describe.v1` is read-only and returns small JSON-like UX hints:
 limits, field labels/help, schedule payload fields, weekday choices and the
@@ -60,6 +62,18 @@ limits, field labels/help, schedule payload fields, weekday choices and the
 `recurring-posts.validate.v1` is also read-only. It validates the selected
 channel and schedule and returns a normalized preview with `status` and
 `scheduleSummary`. It does not write storage, audit, Scheduler jobs or events.
+
+## Management list
+
+`recurring-posts.list.v1` keeps its existing post data and adds derived,
+non-persisted management metadata:
+
+- `managementSummary`: title, active/paused status, channel ID and readable schedule;
+- `quickActions`: Edit, Pause/Resume and Delete descriptors;
+- Delete always points to `delete-preview.v1`, not directly to the destructive operation.
+
+`describe.v1` also declares a compact-card list presentation hint. These hints
+remain host-neutral JSON and do not contain Discord.py UI objects.
 
 ## Schedule presets
 
