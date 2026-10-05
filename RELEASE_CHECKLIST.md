@@ -25,7 +25,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 
 ## Contracts
 
-- [ ] Management API IDs remain versioned and documented.
+- [ ] Management API IDs remain versioned and documented, including `recurring-posts.update.v1`.
 - [ ] Event IDs remain versioned and documented.
 - [ ] Breaking payload/behavior changes use a new contract version.
 
@@ -50,7 +50,10 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 
 - [ ] Existing configuration is visible.
 - [ ] Existing scheduled job survives restart.
+- [ ] Existing `posts.v1` data loads without migration.
 - [ ] Create one harmless recurring post.
+- [ ] Edit its name/message/schedule and confirm the post ID and `post:<post-id>` job key stay unchanged.
+- [ ] Confirm the interval UI communicates the 15-minute minimum once the host UI contract/integration supports it.
 - [ ] Pause and resume it.
 - [ ] Delete the test configuration.
 - [ ] Disable/re-enable the Skill and confirm configuration remains.
