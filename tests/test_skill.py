@@ -9,6 +9,7 @@ from gamerhq_skill_recurring_posts import (
     LIST_API,
     MIN_INTERVAL_SECONDS,
     SET_ACTIVE_API,
+    UPDATE_API,
     RecurringPostsSkill,
 )
 
@@ -31,8 +32,14 @@ class FakeScheduler:
     def __init__(self):
         self.jobs = {}
         self.removed = []
+        self.upserts = []
+        self.fail_upsert = False
+        self.fail_remove = False
 
     async def upsert_job(self, *, key, handler_id, schedule, payload):
+        if self.fail_upsert:
+            raise RuntimeError("synthetic scheduler upsert failure")
+        self.upserts.append(key)
         self.jobs[key] = {
             "handler_id": handler_id,
             "schedule": dict(schedule),
@@ -40,6 +47,8 @@ class FakeScheduler:
         }
 
     async def remove_job(self, *, key):
+        if self.fail_remove:
+            raise RuntimeError("synthetic scheduler remove failure")
         self.removed.append(key)
         self.jobs.pop(key, None)
 
@@ -132,7 +141,7 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tuple(scheduler.handlers), (HANDLER_ID,))
         self.assertEqual(
             set(management.handlers),
-            {LIST_API, GET_API, CREATE_API, SET_ACTIVE_API, DELETE_API},
+            {LIST_API, GET_API, CREATE_API, UPDATE_API, SET_ACTIVE_API, DELETE_API},
         )
 
     async def test_management_contracts_drive_crud_without_private_host_access(self):
@@ -152,6 +161,19 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
 
         fetched = await self.skill._manage_get(self.ctx, {"postId": post_id})
         self.assertEqual(fetched["post"]["content"], "Please remember the rules.")
+
+        updated = await self.skill._manage_update(
+            self.ctx,
+            {
+                "postId": post_id,
+                "name": "Updated reminder",
+                "channelId": 10,
+                "content": "Updated rules reminder.",
+                "schedule": {"type": "interval", "seconds": 30 * 60},
+            },
+        )
+        self.assertEqual(updated["post"]["id"], post_id)
+        self.assertEqual(updated["post"]["content"], "Updated rules reminder.")
 
         paused = await self.skill._manage_set_active(
             self.ctx,
@@ -180,6 +202,131 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
             await self.create(schedule={"type": "interval", "seconds": 60})
         self.assertEqual(self.scheduler.jobs, {})
         self.assertEqual(await self.skill.list_posts(self.ctx), ())
+
+
+    async def test_update_preserves_post_and_scheduler_identity(self):
+        post = await self.create()
+        original_job_key = f"post:{post.id}"
+
+        updated = await self.skill.update_post(
+            self.ctx,
+            post_id=post.id,
+            name="Edited reminder",
+            channel_id=10,
+            content="Edited content.",
+            schedule={"type": "interval", "seconds": 30 * 60},
+        )
+
+        self.assertEqual(updated.id, post.id)
+        self.assertEqual(set(self.scheduler.jobs), {original_job_key})
+        self.assertEqual(self.scheduler.jobs[original_job_key]["payload"], {"postId": post.id})
+        self.assertEqual(self.scheduler.jobs[original_job_key]["schedule"]["seconds"], 30 * 60)
+        self.assertEqual(len(await self.skill.list_posts(self.ctx)), 1)
+
+    async def test_update_can_change_schedule_type_without_recreating_post(self):
+        post = await self.create()
+
+        updated = await self.skill.update_post(
+            self.ctx,
+            post_id=post.id,
+            name=post.name,
+            channel_id=post.channel_id,
+            content=post.content,
+            schedule={"type": "daily", "hour": 8, "minute": 15, "timezone": "Europe/Berlin"},
+        )
+
+        self.assertEqual(updated.id, post.id)
+        self.assertEqual(updated.schedule["type"], "daily")
+        self.assertIn(f"post:{post.id}", self.scheduler.jobs)
+        self.assertEqual(self.scheduler.jobs[f"post:{post.id}"]["schedule"]["type"], "daily")
+
+    async def test_update_can_pause_and_resume_through_management_contract(self):
+        post = await self.create()
+
+        paused = await self.skill._manage_update(
+            self.ctx,
+            {
+                "postId": post.id,
+                "name": post.name,
+                "channelId": post.channel_id,
+                "content": post.content,
+                "schedule": post.schedule,
+                "active": False,
+            },
+        )
+        self.assertFalse(paused["post"]["active"])
+        self.assertNotIn(f"post:{post.id}", self.scheduler.jobs)
+
+        resumed = await self.skill._manage_update(
+            self.ctx,
+            {
+                "postId": post.id,
+                "name": post.name,
+                "channelId": post.channel_id,
+                "content": post.content,
+                "schedule": post.schedule,
+                "active": True,
+            },
+        )
+        self.assertTrue(resumed["post"]["active"])
+        self.assertIn(f"post:{post.id}", self.scheduler.jobs)
+
+    async def test_update_rejects_interval_below_minimum_without_mutating_post(self):
+        post = await self.create()
+
+        with self.assertRaisesRegex(ValueError, "at least 15 minutes"):
+            await self.skill.update_post(
+                self.ctx,
+                post_id=post.id,
+                name="Invalid edit",
+                channel_id=10,
+                content="Should not persist.",
+                schedule={"type": "interval", "seconds": 14 * 60},
+            )
+
+        stored = await self.skill.get_post(self.ctx, post.id)
+        self.assertEqual(stored.name, post.name)
+        self.assertEqual(stored.content, post.content)
+        self.assertEqual(self.scheduler.jobs[f"post:{post.id}"]["schedule"]["seconds"], MIN_INTERVAL_SECONDS)
+
+    async def test_update_scheduler_failure_rolls_back_storage_and_job(self):
+        post = await self.create()
+        self.scheduler.fail_upsert = True
+
+        with self.assertRaisesRegex(RuntimeError, "scheduler upsert failure"):
+            await self.skill.update_post(
+                self.ctx,
+                post_id=post.id,
+                name="Edited",
+                channel_id=10,
+                content="Edited.",
+                schedule={"type": "interval", "seconds": 30 * 60},
+            )
+
+        stored = await self.skill.get_post(self.ctx, post.id)
+        self.assertEqual(stored.name, post.name)
+        self.assertEqual(stored.schedule["seconds"], MIN_INTERVAL_SECONDS)
+        self.assertEqual(self.scheduler.jobs[f"post:{post.id}"]["schedule"]["seconds"], MIN_INTERVAL_SECONDS)
+
+    async def test_existing_posts_v1_record_remains_loadable(self):
+        self.storage.values["posts.v1"] = {
+            "legacy-id": {
+                "id": "legacy-id",
+                "name": "Legacy",
+                "channelId": 10,
+                "content": "Existing configuration.",
+                "schedule": {"type": "interval", "seconds": MIN_INTERVAL_SECONDS},
+                "active": True,
+                "pendingSlot": None,
+                "lastSentSlot": 111,
+                "lastMessageId": 222,
+            }
+        }
+
+        post = await self.skill.get_post(self.ctx, "legacy-id")
+        self.assertEqual(post.id, "legacy-id")
+        self.assertEqual(post.last_sent_slot, 111)
+        self.assertEqual(post.last_message_id, 222)
 
     async def test_daily_and_weekly_schedules_are_supported(self):
         daily = await self.create(
