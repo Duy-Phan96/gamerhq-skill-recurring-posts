@@ -38,6 +38,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] UX metadata still exposes the 15-minute interval minimum and exact schedule payload fields.
 - [ ] Interval presets are valid convenience schedules and do not impose a maximum.
 - [ ] Delete preview is read-only and accurately states configuration/job/message impact.
+- [ ] List items expose the correct Edit, Pause/Resume and Delete-preview actions without persisting derived UI metadata.
 - [ ] Python 3.12 CI passes.
 - [ ] Python 3.14 CI passes.
 - [ ] No Discord token or production state is required by tests.
