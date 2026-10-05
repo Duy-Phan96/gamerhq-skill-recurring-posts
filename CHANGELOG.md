@@ -2,6 +2,16 @@
 
 All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
+## 1.1.0
+
+- Added `recurring-posts.update.v1` for in-place editing of existing recurring posts.
+- Edit preserves post IDs and scheduler job keys and uses idempotent scheduler upsert/remove behavior.
+- Edit can change name, channel, message, schedule and optional active/paused state.
+- Kept `posts.v1` storage backward compatible with no migration.
+- Kept the 15-minute interval minimum enforced server-side for create and edit.
+- Documented the Runtime API 1 management-form schema gap required for a portable UI label such as `Every N minutes (min. 15)`.
+- Expanded offline tests for edit behavior, scheduler identity, validation, rollback and existing stored data.
+
 ## 1.0.0
 
 - First external-package release candidate.
