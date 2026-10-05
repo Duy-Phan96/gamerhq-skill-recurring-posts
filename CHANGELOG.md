@@ -11,6 +11,11 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 - Kept the 15-minute interval minimum enforced server-side for create and edit.
 - Documented the Runtime API 1 management-form schema gap required for a portable UI label such as `Every N minutes (min. 15)`.
 - Expanded offline tests for edit behavior, scheduler identity, validation, rollback and existing stored data.
+- Added `recurring-posts.describe.v1` with host-neutral UX constraints, labels and schedule hints.
+- Added read-only `recurring-posts.validate.v1` for review/preview flows without persistence or Scheduler side effects.
+- Management responses now include readable derived `status` and `scheduleSummary` fields.
+- Create can save a post initially paused via optional `active: false`.
+- Added UX principles for error prevention, preview-before-persist, safe drafts and identity-preserving edits.
 
 ## 1.0.0
 
