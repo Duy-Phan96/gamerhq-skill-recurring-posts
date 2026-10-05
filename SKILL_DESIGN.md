@@ -35,7 +35,7 @@ Schedule recurring Discord messages without a Skill-owned background scheduler.
 
 ## Management APIs
 
-- list/get/create/describe/validate/update/set-active/delete v1 contracts.
+- list/get/create/describe/validate/update/set-active/delete-preview/delete v1 contracts.
 
 ## UX design principles
 
@@ -49,6 +49,9 @@ The Skill optimizes for a review-first administrative flow:
    before activation.
 5. Edit preserves identity and avoids destructive delete/recreate workflows.
 6. Errors remain host-neutral and server-side validation remains authoritative.
+7. Common interval choices are exposed as presets, but presets never replace the
+   underlying generic schedule contract.
+8. Destructive deletion is preceded by a read-only impact preview.
 
 `recurring-posts.describe.v1` is read-only and returns small JSON-like UX hints:
 limits, field labels/help, schedule payload fields, weekday choices and the
@@ -57,6 +60,25 @@ limits, field labels/help, schedule payload fields, weekday choices and the
 `recurring-posts.validate.v1` is also read-only. It validates the selected
 channel and schedule and returns a normalized preview with `status` and
 `scheduleSummary`. It does not write storage, audit, Scheduler jobs or events.
+
+## Schedule presets
+
+`recurring-posts.describe.v1` includes interval presets for 15 minutes,
+30 minutes, 1 hour, 3 hours, 6 hours and 12 hours. They are convenience values
+only. Custom interval schedules remain supported, and the Skill never invents a
+maximum interval.
+
+## Delete safety
+
+`recurring-posts.delete-preview.v1` is a read-only destructive-action preview.
+It returns the post, a user-facing warning, whether configuration and the
+Scheduler job will be removed, and clarifies that existing Discord messages are
+not deleted.
+
+The existing `recurring-posts.delete.v1` contract remains unchanged for
+backward compatibility. Hosts should present preview/confirm UX before invoking
+it; the Skill does not silently change the semantics of the existing delete
+contract.
 
 ## Edit contract
 
