@@ -16,6 +16,8 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 - Management responses now include readable derived `status` and `scheduleSummary` fields.
 - Create can save a post initially paused via optional `active: false`.
 - Added UX principles for error prevention, preview-before-persist, safe drafts and identity-preserving edits.
+- Added quick interval presets for 15m, 30m, 1h, 3h, 6h and 12h while preserving custom intervals.
+- Added read-only `recurring-posts.delete-preview.v1` so hosts can show deletion impact and explicit confirmation before calling the unchanged delete contract.
 
 ## 1.0.0
 
