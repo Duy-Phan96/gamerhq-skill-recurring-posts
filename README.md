@@ -29,6 +29,7 @@ capabilities and the shared Skill Scheduler.
 - `recurring-posts.validate.v1`
 - `recurring-posts.update.v1`
 - `recurring-posts.set-active.v1`
+- `recurring-posts.delete-preview.v1`
 - `recurring-posts.delete.v1`
 
 The host UI must use these management contracts. It must not import this
@@ -57,6 +58,16 @@ classes:
 
 Create also accepts optional boolean `active`, so a recurring post may be saved
 as a paused draft before it ever schedules a job.
+
+For interval schedules, `describe.v1` also exposes quick choices for 15 minutes,
+30 minutes, 1 hour, 3 hours, 6 hours and 12 hours. These are UX shortcuts only;
+custom intervals remain supported and the 15-minute server-side minimum remains
+authoritative.
+
+Before a destructive delete, a host should call
+`recurring-posts.delete-preview.v1`. It returns the affected post, a warning,
+the exact impact, and a suggested confirmation value. The preview is read-only
+and does not remove configuration or Scheduler jobs.
 
 ## Persistence
 
@@ -100,6 +111,10 @@ Recurring Posts follows a small set of portable UX rules:
 - **Use understandable state:** Management responses include derived `status`
   and `scheduleSummary` fields without changing persisted `posts.v1` records.
 - **Safe drafts:** posts may be created paused and activated later.
+- **Fast common paths:** useful interval presets reduce unnecessary typing without
+  removing custom schedules.
+- **Destructive actions are explicit:** deletion has a read-only impact preview
+  before the existing delete operation is invoked.
 
 ## Host UI note
 
