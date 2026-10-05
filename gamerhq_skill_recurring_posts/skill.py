@@ -151,11 +151,50 @@ def _schedule_summary(schedule: Mapping[str, Any]) -> str:
     return schedule_type or "Unknown schedule"
 
 
+def _post_quick_actions(post: RecurringPost) -> list[dict[str, Any]]:
+    active_action = {
+        "id": "pause" if post.active else "resume",
+        "label": "Pause" if post.active else "Resume",
+        "managementApi": SET_ACTIVE_API,
+        "payload": {"postId": post.id, "active": not post.active},
+        "destructive": False,
+    }
+    return [
+        {
+            "id": "edit",
+            "label": "Edit",
+            "managementApi": GET_API,
+            "payload": {"postId": post.id},
+            "destructive": False,
+            "flow": "review-edit",
+        },
+        active_action,
+        {
+            "id": "delete",
+            "label": "Delete",
+            "managementApi": DELETE_PREVIEW_API,
+            "payload": {"postId": post.id},
+            "destructive": True,
+            "flow": "preview-confirm-delete",
+        },
+    ]
+
+
 def _post_management_view(post: RecurringPost) -> dict[str, Any]:
+    schedule_summary = _schedule_summary(post.schedule)
+    status = "active" if post.active else "paused"
     return {
         **post.to_dict(),
-        "status": "active" if post.active else "paused",
-        "scheduleSummary": _schedule_summary(post.schedule),
+        "status": status,
+        "scheduleSummary": schedule_summary,
+        "managementSummary": {
+            "title": post.name,
+            "status": status,
+            "channelId": post.channel_id,
+            "schedule": schedule_summary,
+            "compact": f"{'Active' if post.active else 'Paused'} · {schedule_summary}",
+        },
+        "quickActions": _post_quick_actions(post),
     }
 
 
@@ -249,6 +288,16 @@ def _ux_contract() -> dict[str, Any]:
             },
         },
         "recommendedFlow": ["review", "validate", "confirm"],
+        "listPresentation": {
+            "style": "compact-cards",
+            "primaryField": "managementSummary.title",
+            "secondaryFields": [
+                "managementSummary.status",
+                "managementSummary.channelId",
+                "managementSummary.schedule",
+            ],
+            "actionsField": "quickActions",
+        },
     }
 
 
