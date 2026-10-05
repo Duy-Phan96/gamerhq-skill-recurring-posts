@@ -37,15 +37,11 @@ Storage key: `posts.v1`
 
 Scheduler handler: `recurring-post.execute.v1`
 
-Moving this package to a separate Git repository does not change its Skill ID,
-storage namespace or scheduler identity.
+This Skill now lives in its own Git repository. Changing repository location must never change its Skill ID, storage namespace or scheduler identity.
 
 ## Development
 
-This package is intentionally laid out exactly like a future standalone GitHub
-repository. During the transition it lives under GamerHQ's `packages/`
-directory so integration and deployment can be tested before the repository
-move.
+This is the standalone reference repository for an external GamerHQ Skill. GamerHQ installs a reviewed, pinned commit of this repository during its image build.
 
 Run the GamerHQ SDK conformance/source-audit checks and the package's offline
 tests before release.
@@ -59,11 +55,7 @@ Before changing behavior, review:
 - `AGENTS.md` — repository rules for developers and coding agents;
 - `RELEASE_CHECKLIST.md` — release and deployment readiness.
 
-The GamerHQ host migration/extraction procedure is documented in:
-
-`docs/skills/recurring-posts-extraction.md`
-
-from the GamerHQ repository.
+The host-side extraction/deployment rules are documented in the GamerHQ repository under `docs/skills/recurring-posts-extraction.md`.
 
 The package must remain independently testable without a Discord token or
 production database.
