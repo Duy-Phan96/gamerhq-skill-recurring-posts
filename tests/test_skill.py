@@ -280,6 +280,50 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.scheduler.jobs, jobs_before)
         self.assertEqual(self.audit.calls, audit_before)
 
+    async def test_list_returns_compact_management_summary_and_quick_actions(self):
+        post = await self.create()
+
+        result = await self.skill._manage_list(self.ctx, {})
+        item = result["posts"][0]
+
+        self.assertEqual(item["managementSummary"]["title"], post.name)
+        self.assertEqual(item["managementSummary"]["status"], "active")
+        self.assertEqual(item["managementSummary"]["channelId"], 10)
+        self.assertEqual(item["managementSummary"]["schedule"], "Every 15 minutes")
+        self.assertEqual(item["managementSummary"]["compact"], "Active · Every 15 minutes")
+
+        actions = {action["id"]: action for action in item["quickActions"]}
+        self.assertEqual(actions["edit"]["managementApi"], GET_API)
+        self.assertEqual(actions["pause"]["managementApi"], SET_ACTIVE_API)
+        self.assertEqual(
+            actions["pause"]["payload"],
+            {"postId": post.id, "active": False},
+        )
+        self.assertTrue(actions["delete"]["destructive"])
+        self.assertEqual(actions["delete"]["managementApi"], DELETE_PREVIEW_API)
+
+    async def test_paused_list_item_offers_resume_instead_of_pause(self):
+        post = await self.create(active=False)
+
+        item = (await self.skill._manage_list(self.ctx, {}))["posts"][0]
+        actions = {action["id"]: action for action in item["quickActions"]}
+
+        self.assertEqual(item["managementSummary"]["compact"], "Paused · Every 15 minutes")
+        self.assertIn("resume", actions)
+        self.assertNotIn("pause", actions)
+        self.assertEqual(
+            actions["resume"]["payload"],
+            {"postId": post.id, "active": True},
+        )
+
+    async def test_describe_declares_compact_card_list_presentation(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+
+        presentation = result["listPresentation"]
+        self.assertEqual(presentation["style"], "compact-cards")
+        self.assertEqual(presentation["primaryField"], "managementSummary.title")
+        self.assertEqual(presentation["actionsField"], "quickActions")
+
     async def test_management_contracts_drive_crud_without_private_host_access(self):
         created = await self.skill._manage_create(
             self.ctx,
