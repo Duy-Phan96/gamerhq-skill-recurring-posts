@@ -45,6 +45,7 @@ DESCRIBE_API = "recurring-posts.describe.v1"
 VALIDATE_API = "recurring-posts.validate.v1"
 UPDATE_API = "recurring-posts.update.v1"
 SET_ACTIVE_API = "recurring-posts.set-active.v1"
+DELETE_PREVIEW_API = "recurring-posts.delete-preview.v1"
 DELETE_API = "recurring-posts.delete.v1"
 
 
@@ -196,6 +197,14 @@ def _ux_contract() -> dict[str, Any]:
         "schedules": {
             "interval": {
                 "label": "Interval",
+                "presets": [
+                    {"label": "Every 15 min", "schedule": {"type": "interval", "seconds": 15 * 60}},
+                    {"label": "Every 30 min", "schedule": {"type": "interval", "seconds": 30 * 60}},
+                    {"label": "Every 1 hour", "schedule": {"type": "interval", "seconds": 60 * 60}},
+                    {"label": "Every 3 hours", "schedule": {"type": "interval", "seconds": 3 * 60 * 60}},
+                    {"label": "Every 6 hours", "schedule": {"type": "interval", "seconds": 6 * 60 * 60}},
+                    {"label": "Every 12 hours", "schedule": {"type": "interval", "seconds": 12 * 60 * 60}},
+                ],
                 "fields": {
                     "seconds": {
                         "label": f"Every N minutes (min. {MIN_INTERVAL_SECONDS // 60})",
@@ -282,6 +291,10 @@ class RecurringPostsSkill:
                 ),
                 ManagementApiContract(UPDATE_API, "Update an existing recurring post without changing its identity."),
                 ManagementApiContract(SET_ACTIVE_API, "Pause or resume a recurring post."),
+                ManagementApiContract(
+                    DELETE_PREVIEW_API,
+                    "Preview the impact of deleting a recurring post without changing state.",
+                ),
                 ManagementApiContract(DELETE_API, "Delete a recurring post."),
             ),
         ),
@@ -302,6 +315,7 @@ class RecurringPostsSkill:
         ctx.management.expose(VALIDATE_API, self._manage_validate)
         ctx.management.expose(UPDATE_API, self._manage_update)
         ctx.management.expose(SET_ACTIVE_API, self._manage_set_active)
+        ctx.management.expose(DELETE_PREVIEW_API, self._manage_delete_preview)
         ctx.management.expose(DELETE_API, self._manage_delete)
 
 
@@ -416,6 +430,29 @@ class RecurringPostsSkill:
             raise ValueError("postId and boolean active are required.")
         post = await self.set_active(ctx, post_id=post_id, active=active)
         return {"post": _post_management_view(post)}
+
+    async def _manage_delete_preview(self, ctx, payload) -> Mapping[str, Any]:
+        post_id = str(payload.get("postId", "")).strip()
+        if not post_id:
+            raise ValueError("postId is required.")
+        post = await self.get_post(ctx, post_id)
+        return {
+            "post": _post_management_view(post),
+            "warning": (
+                "Deleting this recurring post removes its configuration and scheduler job. "
+                "This action cannot be undone by the Skill."
+            ),
+            "impact": {
+                "configurationRemoved": True,
+                "schedulerJobRemoved": True,
+                "previousDiscordMessagesDeleted": False,
+            },
+            "confirmation": {
+                "required": True,
+                "actionLabel": "Delete recurring post",
+                "confirmText": post.name,
+            },
+        }
 
     async def _manage_delete(self, ctx, payload) -> Mapping[str, Any]:
         post_id = str(payload.get("postId", "")).strip()
