@@ -39,6 +39,7 @@ MIN_INTERVAL_SECONDS = 15 * 60
 LIST_API = "recurring-posts.list.v1"
 GET_API = "recurring-posts.get.v1"
 CREATE_API = "recurring-posts.create.v1"
+UPDATE_API = "recurring-posts.update.v1"
 SET_ACTIVE_API = "recurring-posts.set-active.v1"
 DELETE_API = "recurring-posts.delete.v1"
 
@@ -125,7 +126,7 @@ class RecurringPostsSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Recurring Posts",
-        version="1.0.0",
+        version="1.1.0",
         runtime_api_version="1",
         description="Post configured messages automatically on interval, daily or weekly schedules.",
         author="GamerHQ",
@@ -150,6 +151,7 @@ class RecurringPostsSkill:
                 ManagementApiContract(LIST_API, "List configured recurring posts."),
                 ManagementApiContract(GET_API, "Read one recurring post."),
                 ManagementApiContract(CREATE_API, "Create a recurring post."),
+                ManagementApiContract(UPDATE_API, "Update an existing recurring post without changing its identity."),
                 ManagementApiContract(SET_ACTIVE_API, "Pause or resume a recurring post."),
                 ManagementApiContract(DELETE_API, "Delete a recurring post."),
             ),
@@ -167,6 +169,7 @@ class RecurringPostsSkill:
         ctx.management.expose(LIST_API, self._manage_list)
         ctx.management.expose(GET_API, self._manage_get)
         ctx.management.expose(CREATE_API, self._manage_create)
+        ctx.management.expose(UPDATE_API, self._manage_update)
         ctx.management.expose(SET_ACTIVE_API, self._manage_set_active)
         ctx.management.expose(DELETE_API, self._manage_delete)
 
@@ -198,6 +201,33 @@ class RecurringPostsSkill:
             channel_id=channel_id,
             content=content,
             schedule=schedule,
+        )
+        return {"post": post.to_dict()}
+
+    async def _manage_update(self, ctx, payload) -> Mapping[str, Any]:
+        try:
+            post_id = str(payload["postId"]).strip()
+            name = str(payload["name"])
+            channel_id = int(payload["channelId"])
+            content = str(payload["content"])
+            schedule = payload["schedule"]
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("Malformed recurring post update request.") from exc
+        if not post_id:
+            raise ValueError("postId is required.")
+        if not isinstance(schedule, Mapping):
+            raise ValueError("schedule must be an object.")
+        active = payload.get("active")
+        if active is not None and not isinstance(active, bool):
+            raise ValueError("active must be a boolean when provided.")
+        post = await self.update_post(
+            ctx,
+            post_id=post_id,
+            name=name,
+            channel_id=channel_id,
+            content=content,
+            schedule=schedule,
+            active=active,
         )
         return {"post": post.to_dict()}
 
@@ -323,6 +353,7 @@ class RecurringPostsSkill:
         channel_id: int,
         content: str,
         schedule: Mapping[str, Any],
+        active: bool | None = None,
     ) -> RecurringPost:
         await ctx.discord.get_channel(channel_id=channel_id)
         normalized = _validated_schedule(schedule)
@@ -338,6 +369,7 @@ class RecurringPostsSkill:
                 channel_id=int(channel_id),
                 content=content.strip(),
                 schedule=normalized,
+                active=previous.active if active is None else active,
                 pending_slot=None,
             )
             _validate_post(updated)
@@ -353,6 +385,8 @@ class RecurringPostsSkill:
                 await self._store(ctx, posts)
                 if previous.active:
                     await self._schedule(ctx, previous)
+                else:
+                    await ctx.scheduler.remove_job(key=self._job_key(previous.id))
                 raise
 
         await ctx.audit.write(
