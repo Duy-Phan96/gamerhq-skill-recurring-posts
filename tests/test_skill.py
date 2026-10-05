@@ -152,7 +152,7 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["limits"]["intervalMinMinutes"], 15)
         self.assertEqual(result["limits"]["maxPosts"], 20)
         self.assertEqual(
-            result["schedules"]["interval"]["fields"]["minutes"]["label"],
+            result["schedules"]["interval"]["fields"]["seconds"]["label"],
             "Every N minutes (min. 15)",
         )
         self.assertEqual(result["recommendedFlow"], ["review", "validate", "confirm"])
