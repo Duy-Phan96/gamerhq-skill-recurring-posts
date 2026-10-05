@@ -18,6 +18,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 - Added UX principles for error prevention, preview-before-persist, safe drafts and identity-preserving edits.
 - Added quick interval presets for 15m, 30m, 1h, 3h, 6h and 12h while preserving custom intervals.
 - Added read-only `recurring-posts.delete-preview.v1` so hosts can show deletion impact and explicit confirmation before calling the unchanged delete contract.
+- Added derived `managementSummary`, compact-card presentation hints and Edit/Pause/Resume/Delete quick actions to make the recurring-post list easier to manage.
 
 ## 1.0.0
 
