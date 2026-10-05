@@ -5,6 +5,7 @@ from gamerhq_skill_recurring_posts import (
     CREATE_API,
     DESCRIBE_API,
     DELETE_API,
+    DELETE_PREVIEW_API,
     GET_API,
     HANDLER_ID,
     LIST_API,
@@ -143,7 +144,7 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tuple(scheduler.handlers), (HANDLER_ID,))
         self.assertEqual(
             set(management.handlers),
-            {LIST_API, GET_API, CREATE_API, DESCRIBE_API, VALIDATE_API, UPDATE_API, SET_ACTIVE_API, DELETE_API},
+            {LIST_API, GET_API, CREATE_API, DESCRIBE_API, VALIDATE_API, UPDATE_API, SET_ACTIVE_API, DELETE_PREVIEW_API, DELETE_API},
         )
 
     async def test_describe_exposes_host_neutral_ux_constraints(self):
@@ -239,6 +240,45 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["post"]["status"], "paused")
         self.assertEqual(result["post"]["scheduleSummary"], "Every 15 minutes")
         self.assertEqual(self.scheduler.jobs, {})
+
+    async def test_describe_exposes_quick_interval_presets(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+        presets = result["schedules"]["interval"]["presets"]
+
+        self.assertEqual(
+            [preset["label"] for preset in presets],
+            [
+                "Every 15 min",
+                "Every 30 min",
+                "Every 1 hour",
+                "Every 3 hours",
+                "Every 6 hours",
+                "Every 12 hours",
+            ],
+        )
+        self.assertEqual(presets[0]["schedule"]["seconds"], MIN_INTERVAL_SECONDS)
+        self.assertEqual(presets[-1]["schedule"]["seconds"], 12 * 60 * 60)
+
+    async def test_delete_preview_is_read_only_and_explains_impact(self):
+        post = await self.create()
+        jobs_before = dict(self.scheduler.jobs)
+        audit_before = list(self.audit.calls)
+
+        result = await self.skill._manage_delete_preview(
+            self.ctx,
+            {"postId": post.id},
+        )
+
+        self.assertEqual(result["post"]["id"], post.id)
+        self.assertEqual(result["confirmation"]["confirmText"], post.name)
+        self.assertTrue(result["confirmation"]["required"])
+        self.assertTrue(result["impact"]["configurationRemoved"])
+        self.assertTrue(result["impact"]["schedulerJobRemoved"])
+        self.assertFalse(result["impact"]["previousDiscordMessagesDeleted"])
+        self.assertIn("cannot be undone", result["warning"])
+        self.assertEqual(await self.skill.get_post(self.ctx, post.id), post)
+        self.assertEqual(self.scheduler.jobs, jobs_before)
+        self.assertEqual(self.audit.calls, audit_before)
 
     async def test_management_contracts_drive_crud_without_private_host_access(self):
         created = await self.skill._manage_create(
