@@ -35,7 +35,28 @@ Schedule recurring Discord messages without a Skill-owned background scheduler.
 
 ## Management APIs
 
-- list/get/create/update/set-active/delete v1 contracts.
+- list/get/create/describe/validate/update/set-active/delete v1 contracts.
+
+## UX design principles
+
+The Skill optimizes for a review-first administrative flow:
+
+1. Constraints are discoverable before data entry.
+2. Drafts can be validated without persistence or Scheduler side effects.
+3. Human-readable schedule/status summaries are derived for Management API
+   responses but are never written into `posts.v1`.
+4. Create can save a post paused, allowing an administrator to prepare content
+   before activation.
+5. Edit preserves identity and avoids destructive delete/recreate workflows.
+6. Errors remain host-neutral and server-side validation remains authoritative.
+
+`recurring-posts.describe.v1` is read-only and returns small JSON-like UX hints:
+limits, field labels/help, schedule payload fields, weekday choices and the
+15-minute interval minimum.
+
+`recurring-posts.validate.v1` is also read-only. It validates the selected
+channel and schedule and returns a normalized preview with `status` and
+`scheduleSummary`. It does not write storage, audit, Scheduler jobs or events.
 
 ## Edit contract
 
@@ -52,11 +73,11 @@ carried into a changed schedule.
 
 ## Configuration UI contract gap
 
-Runtime API 1 currently has no public Management API form schema for labels,
-field types, constraints or help text. The host therefore cannot derive the
-desired interval label from this portable package through the SDK today.
-Host-side integration should render **Every N minutes (min. 15)** (or equivalent)
-and must still rely on the Skill's server-side 15-minute validation.
+Runtime API 1 currently has no standardized cross-Skill Management API form
+schema. Recurring Posts therefore exposes Skill-specific host-neutral UX
+metadata through `recurring-posts.describe.v1` instead of importing host UI
+objects. This solves the immediate Skill UX need while keeping the package
+portable.
 
 The missing future SDK/host contract is a host-neutral management-form schema
 that can declare an interval-minutes input and its minimum without importing
