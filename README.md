@@ -25,6 +25,8 @@ capabilities and the shared Skill Scheduler.
 - `recurring-posts.list.v1`
 - `recurring-posts.get.v1`
 - `recurring-posts.create.v1`
+- `recurring-posts.describe.v1`
+- `recurring-posts.validate.v1`
 - `recurring-posts.update.v1`
 - `recurring-posts.set-active.v1`
 - `recurring-posts.delete.v1`
@@ -38,6 +40,23 @@ optional boolean `active`. Compatible edits preserve the scheduler identity
 `post:<post-id>` and use scheduler upsert rather than delete + recreate.
 
 Interval schedules are validated server-side with a minimum of 15 minutes.
+
+### UX-oriented management flow
+
+A host can build a friendlier configuration flow without importing private Skill
+classes:
+
+1. Call `recurring-posts.describe.v1` to read limits, field hints, supported
+   schedules and the interval label/constraint.
+2. Let the user review the draft.
+3. Call `recurring-posts.validate.v1` to validate the destination channel and
+   normalized schedule without writing storage, creating jobs or auditing a
+   configuration change.
+4. Show the returned preview, including readable status and schedule summary.
+5. Only after confirmation call create or update.
+
+Create also accepts optional boolean `active`, so a recurring post may be saved
+as a paused draft before it ever schedules a job.
 
 ## Persistence
 
@@ -68,12 +87,27 @@ The host-side extraction/deployment rules are documented in the GamerHQ reposito
 The package must remain independently testable without a Discord token or
 production database.
 
+## User experience principles
+
+Recurring Posts follows a small set of portable UX rules:
+
+- **Prevent errors early:** expose constraints before submit and keep server-side
+  validation authoritative.
+- **Preview before persistence:** validation is read-only and safe to call from
+  review/confirm flows.
+- **Preserve identity during edits:** editing never forces users to delete and
+  recreate a post.
+- **Use understandable state:** Management responses include derived `status`
+  and `scheduleSummary` fields without changing persisted `posts.v1` records.
+- **Safe drafts:** posts may be created paused and activated later.
+
 ## Host UI note
 
 The current Runtime API 1 `ManagementApiContract` exposes only an operation ID
 and description; it does not provide a public form/input-schema contract.
-Therefore this Skill cannot portably define the rendered Discord field label
-for interval minutes. A host UI should display **Every N minutes (min. 15)** (or
-equivalent) when integrating the Skill, while the Skill's 15-minute server-side
+The Skill now exposes its own host-neutral UX hints through
+`recurring-posts.describe.v1`, including **Every N minutes (min. 15)** and the
+underlying schedule payload field. This is enough for a GamerHQ integration to
+build a good Skill-specific flow while the Skill's 15-minute server-side
 validation remains authoritative. A future generic Skill Builder needs a public
 management-form schema in the SDK rather than private host assumptions.
