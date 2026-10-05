@@ -35,10 +35,14 @@ HANDLER_ID = "recurring-post.execute.v1"
 SENT_EVENT_ID = "recurring-post.sent.v1"
 STORAGE_KEY = "posts.v1"
 MAX_POSTS = 20
+MAX_NAME_CHARS = 80
+MAX_CONTENT_CHARS = 2000
 MIN_INTERVAL_SECONDS = 15 * 60
 LIST_API = "recurring-posts.list.v1"
 GET_API = "recurring-posts.get.v1"
 CREATE_API = "recurring-posts.create.v1"
+DESCRIBE_API = "recurring-posts.describe.v1"
+VALIDATE_API = "recurring-posts.validate.v1"
 UPDATE_API = "recurring-posts.update.v1"
 SET_ACTIVE_API = "recurring-posts.set-active.v1"
 DELETE_API = "recurring-posts.delete.v1"
@@ -111,15 +115,117 @@ def _validated_schedule(value: Mapping[str, Any]) -> dict[str, Any]:
 def _validate_post(post: RecurringPost) -> None:
     if not post.id or len(post.id) > 64:
         raise ValueError("Recurring Post id is invalid.")
-    if not post.name.strip() or len(post.name) > 80:
-        raise ValueError("Recurring Post name must be 1-80 characters.")
+    if not post.name.strip() or len(post.name) > MAX_NAME_CHARS:
+        raise ValueError(f"Recurring Post name must be 1-{MAX_NAME_CHARS} characters.")
     if post.channel_id <= 0:
         raise ValueError("Recurring Post channel must be positive.")
     if not post.content.strip():
         raise ValueError("Recurring Post content is required.")
-    if len(post.content) > 2000:
-        raise ValueError("Recurring Post content exceeds Discord's 2000 character limit.")
+    if len(post.content) > MAX_CONTENT_CHARS:
+        raise ValueError(
+            f"Recurring Post content exceeds Discord's {MAX_CONTENT_CHARS} character limit."
+        )
     _validated_schedule(post.schedule)
+
+
+_WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+
+def _schedule_summary(schedule: Mapping[str, Any]) -> str:
+    schedule_type = str(schedule.get("type", ""))
+    if schedule_type == "interval":
+        minutes = int(schedule["seconds"]) // 60
+        return f"Every {minutes} minute{'s' if minutes != 1 else ''}"
+    if schedule_type == "daily":
+        return (
+            f"Daily at {int(schedule['hour']):02d}:{int(schedule['minute']):02d} "
+            f"({schedule['timezone']})"
+        )
+    if schedule_type == "weekly":
+        weekday = int(schedule["weekday"])
+        return (
+            f"{_WEEKDAYS[weekday]} at {int(schedule['hour']):02d}:"
+            f"{int(schedule['minute']):02d} ({schedule['timezone']})"
+        )
+    return schedule_type or "Unknown schedule"
+
+
+def _post_management_view(post: RecurringPost) -> dict[str, Any]:
+    return {
+        **post.to_dict(),
+        "status": "active" if post.active else "paused",
+        "scheduleSummary": _schedule_summary(post.schedule),
+    }
+
+
+def _ux_contract() -> dict[str, Any]:
+    return {
+        "limits": {
+            "maxPosts": MAX_POSTS,
+            "nameMaxChars": MAX_NAME_CHARS,
+            "contentMaxChars": MAX_CONTENT_CHARS,
+            "intervalMinMinutes": MIN_INTERVAL_SECONDS // 60,
+        },
+        "fields": {
+            "name": {
+                "label": "Name",
+                "required": True,
+                "maxLength": MAX_NAME_CHARS,
+                "help": "A short internal name so you can recognize this recurring post later.",
+            },
+            "channelId": {
+                "label": "Destination channel",
+                "required": True,
+                "help": "Choose the Discord channel where the message should be posted.",
+            },
+            "content": {
+                "label": "Message",
+                "required": True,
+                "maxLength": MAX_CONTENT_CHARS,
+            },
+            "active": {
+                "label": "Status",
+                "required": False,
+                "default": True,
+                "options": [
+                    {"value": True, "label": "Active"},
+                    {"value": False, "label": "Paused"},
+                ],
+            },
+        },
+        "schedules": {
+            "interval": {
+                "label": "Interval",
+                "fields": {
+                    "minutes": {
+                        "label": f"Every N minutes (min. {MIN_INTERVAL_SECONDS // 60})",
+                        "required": True,
+                        "min": MIN_INTERVAL_SECONDS // 60,
+                    }
+                },
+            },
+            "daily": {
+                "label": "Daily",
+                "fields": {
+                    "time": {"label": "Time", "required": True},
+                    "timezone": {"label": "Timezone", "required": True},
+                },
+            },
+            "weekly": {
+                "label": "Weekly",
+                "fields": {
+                    "weekday": {
+                        "label": "Day",
+                        "required": True,
+                        "options": list(_WEEKDAYS),
+                    },
+                    "time": {"label": "Time", "required": True},
+                    "timezone": {"label": "Timezone", "required": True},
+                },
+            },
+        },
+        "recommendedFlow": ["review", "validate", "confirm"],
+    }
 
 
 class RecurringPostsSkill:
@@ -151,6 +257,14 @@ class RecurringPostsSkill:
                 ManagementApiContract(LIST_API, "List configured recurring posts."),
                 ManagementApiContract(GET_API, "Read one recurring post."),
                 ManagementApiContract(CREATE_API, "Create a recurring post."),
+                ManagementApiContract(
+                    DESCRIBE_API,
+                    "Read host-neutral UX hints and configuration constraints.",
+                ),
+                ManagementApiContract(
+                    VALIDATE_API,
+                    "Validate and preview a recurring post without persisting it.",
+                ),
                 ManagementApiContract(UPDATE_API, "Update an existing recurring post without changing its identity."),
                 ManagementApiContract(SET_ACTIVE_API, "Pause or resume a recurring post."),
                 ManagementApiContract(DELETE_API, "Delete a recurring post."),
@@ -169,6 +283,8 @@ class RecurringPostsSkill:
         ctx.management.expose(LIST_API, self._manage_list)
         ctx.management.expose(GET_API, self._manage_get)
         ctx.management.expose(CREATE_API, self._manage_create)
+        ctx.management.expose(DESCRIBE_API, self._manage_describe)
+        ctx.management.expose(VALIDATE_API, self._manage_validate)
         ctx.management.expose(UPDATE_API, self._manage_update)
         ctx.management.expose(SET_ACTIVE_API, self._manage_set_active)
         ctx.management.expose(DELETE_API, self._manage_delete)
@@ -176,14 +292,57 @@ class RecurringPostsSkill:
 
     async def _manage_list(self, ctx, payload) -> Mapping[str, Any]:
         posts = await self.list_posts(ctx)
-        return {"posts": [post.to_dict() for post in posts]}
+        return {"posts": [_post_management_view(post) for post in posts]}
 
     async def _manage_get(self, ctx, payload) -> Mapping[str, Any]:
         post_id = str(payload.get("postId", "")).strip()
         if not post_id:
             raise ValueError("postId is required.")
         post = await self.get_post(ctx, post_id)
-        return {"post": post.to_dict()}
+        return {"post": _post_management_view(post)}
+
+    async def _manage_describe(self, ctx, payload) -> Mapping[str, Any]:
+        return _ux_contract()
+
+    async def _manage_validate(self, ctx, payload) -> Mapping[str, Any]:
+        try:
+            name = str(payload["name"])
+            channel_id = int(payload["channelId"])
+            content = str(payload["content"])
+            schedule = payload["schedule"]
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("Malformed recurring post preview request.") from exc
+        if not isinstance(schedule, Mapping):
+            raise ValueError("schedule must be an object.")
+
+        active = payload.get("active", True)
+        if not isinstance(active, bool):
+            raise ValueError("active must be a boolean when provided.")
+
+        post_id = str(payload.get("postId", "")).strip()
+        if post_id:
+            existing = await self.get_post(ctx, post_id)
+            if "active" not in payload:
+                active = existing.active
+
+        await ctx.discord.get_channel(channel_id=channel_id)
+        normalized = _validated_schedule(schedule)
+        preview = RecurringPost(
+            id=post_id or "preview",
+            name=name.strip(),
+            channel_id=channel_id,
+            content=content.strip(),
+            schedule=normalized,
+            active=active,
+        )
+        _validate_post(preview)
+        view = _post_management_view(preview)
+        if not post_id:
+            view.pop("id", None)
+        view.pop("pendingSlot", None)
+        view.pop("lastSentSlot", None)
+        view.pop("lastMessageId", None)
+        return {"valid": True, "preview": view}
 
     async def _manage_create(self, ctx, payload) -> Mapping[str, Any]:
         try:
@@ -195,14 +354,18 @@ class RecurringPostsSkill:
             raise ValueError("Malformed recurring post request.") from exc
         if not isinstance(schedule, Mapping):
             raise ValueError("schedule must be an object.")
+        active = payload.get("active", True)
+        if not isinstance(active, bool):
+            raise ValueError("active must be a boolean when provided.")
         post = await self.create_post(
             ctx,
             name=name,
             channel_id=channel_id,
             content=content,
             schedule=schedule,
+            active=active,
         )
-        return {"post": post.to_dict()}
+        return {"post": _post_management_view(post)}
 
     async def _manage_update(self, ctx, payload) -> Mapping[str, Any]:
         try:
@@ -229,7 +392,7 @@ class RecurringPostsSkill:
             schedule=schedule,
             active=active,
         )
-        return {"post": post.to_dict()}
+        return {"post": _post_management_view(post)}
 
     async def _manage_set_active(self, ctx, payload) -> Mapping[str, Any]:
         post_id = str(payload.get("postId", "")).strip()
@@ -237,7 +400,7 @@ class RecurringPostsSkill:
         if not post_id or not isinstance(active, bool):
             raise ValueError("postId and boolean active are required.")
         post = await self.set_active(ctx, post_id=post_id, active=active)
-        return {"post": post.to_dict()}
+        return {"post": _post_management_view(post)}
 
     async def _manage_delete(self, ctx, payload) -> Mapping[str, Any]:
         post_id = str(payload.get("postId", "")).strip()
