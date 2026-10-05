@@ -197,18 +197,25 @@ def _ux_contract() -> dict[str, Any]:
             "interval": {
                 "label": "Interval",
                 "fields": {
-                    "minutes": {
+                    "seconds": {
                         "label": f"Every N minutes (min. {MIN_INTERVAL_SECONDS // 60})",
                         "required": True,
-                        "min": MIN_INTERVAL_SECONDS // 60,
+                        "inputUnit": "minutes",
+                        "minimumInput": MIN_INTERVAL_SECONDS // 60,
+                        "payloadUnit": "seconds",
                     }
                 },
             },
             "daily": {
                 "label": "Daily",
                 "fields": {
-                    "time": {"label": "Time", "required": True},
-                    "timezone": {"label": "Timezone", "required": True},
+                    "hour": {"label": "Hour", "required": True, "min": 0, "max": 23},
+                    "minute": {"label": "Minute", "required": True, "min": 0, "max": 59},
+                    "timezone": {
+                        "label": "Timezone",
+                        "required": True,
+                        "help": "Use an IANA timezone such as Europe/Berlin.",
+                    },
                 },
             },
             "weekly": {
@@ -217,10 +224,18 @@ def _ux_contract() -> dict[str, Any]:
                     "weekday": {
                         "label": "Day",
                         "required": True,
-                        "options": list(_WEEKDAYS),
+                        "options": [
+                            {"value": index, "label": label}
+                            for index, label in enumerate(_WEEKDAYS)
+                        ],
                     },
-                    "time": {"label": "Time", "required": True},
-                    "timezone": {"label": "Timezone", "required": True},
+                    "hour": {"label": "Hour", "required": True, "min": 0, "max": 23},
+                    "minute": {"label": "Minute", "required": True, "min": 0, "max": 59},
+                    "timezone": {
+                        "label": "Timezone",
+                        "required": True,
+                        "help": "Use an IANA timezone such as Europe/Berlin.",
+                    },
                 },
             },
         },
