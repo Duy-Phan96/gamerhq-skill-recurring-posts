@@ -3,12 +3,16 @@ from types import SimpleNamespace
 
 from gamerhq_skill_recurring_posts import (
     CREATE_API,
+    DESCRIBE_API,
     DELETE_API,
+    DELETE_PREVIEW_API,
     GET_API,
     HANDLER_ID,
     LIST_API,
     MIN_INTERVAL_SECONDS,
     SET_ACTIVE_API,
+    UPDATE_API,
+    VALIDATE_API,
     RecurringPostsSkill,
 )
 
@@ -31,8 +35,14 @@ class FakeScheduler:
     def __init__(self):
         self.jobs = {}
         self.removed = []
+        self.upserts = []
+        self.fail_upsert = False
+        self.fail_remove = False
 
     async def upsert_job(self, *, key, handler_id, schedule, payload):
+        if self.fail_upsert:
+            raise RuntimeError("synthetic scheduler upsert failure")
+        self.upserts.append(key)
         self.jobs[key] = {
             "handler_id": handler_id,
             "schedule": dict(schedule),
@@ -40,6 +50,8 @@ class FakeScheduler:
         }
 
     async def remove_job(self, *, key):
+        if self.fail_remove:
+            raise RuntimeError("synthetic scheduler remove failure")
         self.removed.append(key)
         self.jobs.pop(key, None)
 
@@ -132,8 +144,185 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tuple(scheduler.handlers), (HANDLER_ID,))
         self.assertEqual(
             set(management.handlers),
-            {LIST_API, GET_API, CREATE_API, SET_ACTIVE_API, DELETE_API},
+            {LIST_API, GET_API, CREATE_API, DESCRIBE_API, VALIDATE_API, UPDATE_API, SET_ACTIVE_API, DELETE_PREVIEW_API, DELETE_API},
         )
+
+    async def test_describe_exposes_host_neutral_ux_constraints(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+
+        self.assertEqual(result["limits"]["intervalMinMinutes"], 15)
+        self.assertEqual(result["limits"]["maxPosts"], 20)
+        self.assertEqual(
+            result["schedules"]["interval"]["fields"]["seconds"]["label"],
+            "Every N minutes (min. 15)",
+        )
+        self.assertEqual(result["recommendedFlow"], ["review", "validate", "confirm"])
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.audit.calls, [])
+
+    async def test_validate_returns_preview_without_persisting_or_scheduling(self):
+        result = await self.skill._manage_validate(
+            self.ctx,
+            {
+                "name": "Rules reminder",
+                "channelId": 10,
+                "content": "Please remember the rules.",
+                "schedule": {"type": "interval", "seconds": 30 * 60},
+                "active": False,
+            },
+        )
+
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["preview"]["status"], "paused")
+        self.assertEqual(result["preview"]["scheduleSummary"], "Every 30 minutes")
+        self.assertNotIn("id", result["preview"])
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.audit.calls, [])
+
+    async def test_validate_reuses_existing_active_state_for_edit_preview(self):
+        post = await self.create(active=False)
+
+        result = await self.skill._manage_validate(
+            self.ctx,
+            {
+                "postId": post.id,
+                "name": "Edited reminder",
+                "channelId": 10,
+                "content": "Edited content.",
+                "schedule": {
+                    "type": "weekly",
+                    "weekday": 0,
+                    "hour": 9,
+                    "minute": 5,
+                    "timezone": "Europe/Berlin",
+                },
+            },
+        )
+
+        self.assertEqual(result["preview"]["id"], post.id)
+        self.assertEqual(result["preview"]["status"], "paused")
+        self.assertEqual(
+            result["preview"]["scheduleSummary"],
+            "Monday at 09:05 (Europe/Berlin)",
+        )
+
+    async def test_validate_enforces_interval_minimum_without_side_effects(self):
+        with self.assertRaisesRegex(ValueError, "at least 15 minutes"):
+            await self.skill._manage_validate(
+                self.ctx,
+                {
+                    "name": "Too frequent",
+                    "channelId": 10,
+                    "content": "No.",
+                    "schedule": {"type": "interval", "seconds": 14 * 60},
+                },
+            )
+
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.audit.calls, [])
+
+    async def test_create_can_start_paused_and_returns_readable_status(self):
+        result = await self.skill._manage_create(
+            self.ctx,
+            {
+                "name": "Draft post",
+                "channelId": 10,
+                "content": "Not live yet.",
+                "schedule": {"type": "interval", "seconds": MIN_INTERVAL_SECONDS},
+                "active": False,
+            },
+        )
+
+        self.assertFalse(result["post"]["active"])
+        self.assertEqual(result["post"]["status"], "paused")
+        self.assertEqual(result["post"]["scheduleSummary"], "Every 15 minutes")
+        self.assertEqual(self.scheduler.jobs, {})
+
+    async def test_describe_exposes_quick_interval_presets(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+        presets = result["schedules"]["interval"]["presets"]
+
+        self.assertEqual(
+            [preset["label"] for preset in presets],
+            [
+                "Every 15 min",
+                "Every 30 min",
+                "Every 1 hour",
+                "Every 3 hours",
+                "Every 6 hours",
+                "Every 12 hours",
+            ],
+        )
+        self.assertEqual(presets[0]["schedule"]["seconds"], MIN_INTERVAL_SECONDS)
+        self.assertEqual(presets[-1]["schedule"]["seconds"], 12 * 60 * 60)
+
+    async def test_delete_preview_is_read_only_and_explains_impact(self):
+        post = await self.create()
+        jobs_before = dict(self.scheduler.jobs)
+        audit_before = list(self.audit.calls)
+
+        result = await self.skill._manage_delete_preview(
+            self.ctx,
+            {"postId": post.id},
+        )
+
+        self.assertEqual(result["post"]["id"], post.id)
+        self.assertEqual(result["confirmation"]["confirmText"], post.name)
+        self.assertTrue(result["confirmation"]["required"])
+        self.assertTrue(result["impact"]["configurationRemoved"])
+        self.assertTrue(result["impact"]["schedulerJobRemoved"])
+        self.assertFalse(result["impact"]["previousDiscordMessagesDeleted"])
+        self.assertIn("cannot be undone", result["warning"])
+        self.assertEqual(await self.skill.get_post(self.ctx, post.id), post)
+        self.assertEqual(self.scheduler.jobs, jobs_before)
+        self.assertEqual(self.audit.calls, audit_before)
+
+    async def test_list_returns_compact_management_summary_and_quick_actions(self):
+        post = await self.create()
+
+        result = await self.skill._manage_list(self.ctx, {})
+        item = result["posts"][0]
+
+        self.assertEqual(item["managementSummary"]["title"], post.name)
+        self.assertEqual(item["managementSummary"]["status"], "active")
+        self.assertEqual(item["managementSummary"]["channelId"], 10)
+        self.assertEqual(item["managementSummary"]["schedule"], "Every 15 minutes")
+        self.assertEqual(item["managementSummary"]["compact"], "Active · Every 15 minutes")
+
+        actions = {action["id"]: action for action in item["quickActions"]}
+        self.assertEqual(actions["edit"]["managementApi"], GET_API)
+        self.assertEqual(actions["pause"]["managementApi"], SET_ACTIVE_API)
+        self.assertEqual(
+            actions["pause"]["payload"],
+            {"postId": post.id, "active": False},
+        )
+        self.assertTrue(actions["delete"]["destructive"])
+        self.assertEqual(actions["delete"]["managementApi"], DELETE_PREVIEW_API)
+
+    async def test_paused_list_item_offers_resume_instead_of_pause(self):
+        post = await self.create(active=False)
+
+        item = (await self.skill._manage_list(self.ctx, {}))["posts"][0]
+        actions = {action["id"]: action for action in item["quickActions"]}
+
+        self.assertEqual(item["managementSummary"]["compact"], "Paused · Every 15 minutes")
+        self.assertIn("resume", actions)
+        self.assertNotIn("pause", actions)
+        self.assertEqual(
+            actions["resume"]["payload"],
+            {"postId": post.id, "active": True},
+        )
+
+    async def test_describe_declares_compact_card_list_presentation(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+
+        presentation = result["listPresentation"]
+        self.assertEqual(presentation["style"], "compact-cards")
+        self.assertEqual(presentation["primaryField"], "managementSummary.title")
+        self.assertEqual(presentation["actionsField"], "quickActions")
 
     async def test_management_contracts_drive_crud_without_private_host_access(self):
         created = await self.skill._manage_create(
@@ -152,6 +341,19 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
 
         fetched = await self.skill._manage_get(self.ctx, {"postId": post_id})
         self.assertEqual(fetched["post"]["content"], "Please remember the rules.")
+
+        updated = await self.skill._manage_update(
+            self.ctx,
+            {
+                "postId": post_id,
+                "name": "Updated reminder",
+                "channelId": 10,
+                "content": "Updated rules reminder.",
+                "schedule": {"type": "interval", "seconds": 30 * 60},
+            },
+        )
+        self.assertEqual(updated["post"]["id"], post_id)
+        self.assertEqual(updated["post"]["content"], "Updated rules reminder.")
 
         paused = await self.skill._manage_set_active(
             self.ctx,
@@ -180,6 +382,131 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
             await self.create(schedule={"type": "interval", "seconds": 60})
         self.assertEqual(self.scheduler.jobs, {})
         self.assertEqual(await self.skill.list_posts(self.ctx), ())
+
+
+    async def test_update_preserves_post_and_scheduler_identity(self):
+        post = await self.create()
+        original_job_key = f"post:{post.id}"
+
+        updated = await self.skill.update_post(
+            self.ctx,
+            post_id=post.id,
+            name="Edited reminder",
+            channel_id=10,
+            content="Edited content.",
+            schedule={"type": "interval", "seconds": 30 * 60},
+        )
+
+        self.assertEqual(updated.id, post.id)
+        self.assertEqual(set(self.scheduler.jobs), {original_job_key})
+        self.assertEqual(self.scheduler.jobs[original_job_key]["payload"], {"postId": post.id})
+        self.assertEqual(self.scheduler.jobs[original_job_key]["schedule"]["seconds"], 30 * 60)
+        self.assertEqual(len(await self.skill.list_posts(self.ctx)), 1)
+
+    async def test_update_can_change_schedule_type_without_recreating_post(self):
+        post = await self.create()
+
+        updated = await self.skill.update_post(
+            self.ctx,
+            post_id=post.id,
+            name=post.name,
+            channel_id=post.channel_id,
+            content=post.content,
+            schedule={"type": "daily", "hour": 8, "minute": 15, "timezone": "Europe/Berlin"},
+        )
+
+        self.assertEqual(updated.id, post.id)
+        self.assertEqual(updated.schedule["type"], "daily")
+        self.assertIn(f"post:{post.id}", self.scheduler.jobs)
+        self.assertEqual(self.scheduler.jobs[f"post:{post.id}"]["schedule"]["type"], "daily")
+
+    async def test_update_can_pause_and_resume_through_management_contract(self):
+        post = await self.create()
+
+        paused = await self.skill._manage_update(
+            self.ctx,
+            {
+                "postId": post.id,
+                "name": post.name,
+                "channelId": post.channel_id,
+                "content": post.content,
+                "schedule": post.schedule,
+                "active": False,
+            },
+        )
+        self.assertFalse(paused["post"]["active"])
+        self.assertNotIn(f"post:{post.id}", self.scheduler.jobs)
+
+        resumed = await self.skill._manage_update(
+            self.ctx,
+            {
+                "postId": post.id,
+                "name": post.name,
+                "channelId": post.channel_id,
+                "content": post.content,
+                "schedule": post.schedule,
+                "active": True,
+            },
+        )
+        self.assertTrue(resumed["post"]["active"])
+        self.assertIn(f"post:{post.id}", self.scheduler.jobs)
+
+    async def test_update_rejects_interval_below_minimum_without_mutating_post(self):
+        post = await self.create()
+
+        with self.assertRaisesRegex(ValueError, "at least 15 minutes"):
+            await self.skill.update_post(
+                self.ctx,
+                post_id=post.id,
+                name="Invalid edit",
+                channel_id=10,
+                content="Should not persist.",
+                schedule={"type": "interval", "seconds": 14 * 60},
+            )
+
+        stored = await self.skill.get_post(self.ctx, post.id)
+        self.assertEqual(stored.name, post.name)
+        self.assertEqual(stored.content, post.content)
+        self.assertEqual(self.scheduler.jobs[f"post:{post.id}"]["schedule"]["seconds"], MIN_INTERVAL_SECONDS)
+
+    async def test_update_scheduler_failure_rolls_back_storage_and_job(self):
+        post = await self.create()
+        self.scheduler.fail_upsert = True
+
+        with self.assertRaisesRegex(RuntimeError, "scheduler upsert failure"):
+            await self.skill.update_post(
+                self.ctx,
+                post_id=post.id,
+                name="Edited",
+                channel_id=10,
+                content="Edited.",
+                schedule={"type": "interval", "seconds": 30 * 60},
+            )
+
+        stored = await self.skill.get_post(self.ctx, post.id)
+        self.assertEqual(stored.name, post.name)
+        self.assertEqual(stored.schedule["seconds"], MIN_INTERVAL_SECONDS)
+        self.assertEqual(self.scheduler.jobs[f"post:{post.id}"]["schedule"]["seconds"], MIN_INTERVAL_SECONDS)
+
+    async def test_existing_posts_v1_record_remains_loadable(self):
+        self.storage.values["posts.v1"] = {
+            "legacy-id": {
+                "id": "legacy-id",
+                "name": "Legacy",
+                "channelId": 10,
+                "content": "Existing configuration.",
+                "schedule": {"type": "interval", "seconds": MIN_INTERVAL_SECONDS},
+                "active": True,
+                "pendingSlot": None,
+                "lastSentSlot": 111,
+                "lastMessageId": 222,
+            }
+        }
+
+        post = await self.skill.get_post(self.ctx, "legacy-id")
+        self.assertEqual(post.id, "legacy-id")
+        self.assertEqual(post.last_sent_slot, 111)
+        self.assertEqual(post.last_message_id, 222)
 
     async def test_daily_and_weekly_schedules_are_supported(self):
         daily = await self.create(
