@@ -64,6 +64,12 @@ For interval schedules, `describe.v1` also exposes quick choices for 15 minutes,
 custom intervals remain supported and the 15-minute server-side minimum remains
 authoritative.
 
+The list response is also optimized for day-to-day management. Each post
+contains a compact summary with title, status, channel ID and readable schedule,
+plus host-neutral quick-action descriptors. Edit starts a review flow,
+Pause/Resume maps to `set-active.v1`, and Delete routes through the preview
+contract first.
+
 Before a destructive delete, a host should call
 `recurring-posts.delete-preview.v1`. It returns the affected post, a warning,
 the exact impact, and a suggested confirmation value. The preview is read-only
@@ -115,6 +121,9 @@ Recurring Posts follows a small set of portable UX rules:
   removing custom schedules.
 - **Destructive actions are explicit:** deletion has a read-only impact preview
   before the existing delete operation is invoked.
+- **Daily management stays compact:** list responses include a small
+  `managementSummary` and `quickActions` block so the host can render cards
+  with Edit, Pause/Resume and Delete without reconstructing Skill semantics.
 
 ## Host UI note
 
