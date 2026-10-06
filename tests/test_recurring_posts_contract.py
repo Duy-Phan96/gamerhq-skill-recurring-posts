@@ -24,7 +24,7 @@ class RecurringPostsPackageContractTests(unittest.TestCase):
             expected_skill_id="recurring-posts",
         )
         self.assertEqual(report.skill_id, "recurring-posts")
-        self.assertEqual(report.version, "1.2.1")
+        self.assertEqual(report.version, "1.2.2")
 
     def test_static_package_metadata_matches_manifest(self):
         report = validate_skill_package_matches_implementation(
