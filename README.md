@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.2.1`  
+Version: `1.2.2`  
 Runtime API: `1`
 
 ## Purpose
@@ -155,3 +155,11 @@ presets and limits. Server-side validation remains authoritative, including the
 Version 1.2.1 declares `postId` as the collection item identity payload key.
 Generic hosts can therefore read an item ID from `id` and safely call
 get/update/pause/delete contracts without Recurring Posts-specific frontend code.
+
+Version 1.2.2 completes the generic collection binding by declaring:
+- `describeContract = recurring-posts.describe.v1` for host-neutral UX and schedule hints;
+- `itemReadPath = post` for normalizing single-item read responses.
+
+Together with `itemIdPayloadKey = postId`, a generic host can discover, read,
+edit, pause/resume and delete Recurring Posts without knowing Recurring Posts
+payload conventions in frontend code.
