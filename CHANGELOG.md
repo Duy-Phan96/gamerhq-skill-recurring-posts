@@ -2,6 +2,12 @@
 
 All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
+## 1.2.1
+
+- Declared `postId` as the generic collection item identity payload key.
+- Enables host/web collection edit, pause/resume and delete flows without Recurring Posts-specific payload knowledge.
+- No storage, scheduler, capability or Management API behavior changes.
+
 ## 1.2.0
 
 - Added Management UI Schema V1 as a declarative description of the existing Recurring Posts management surface.
