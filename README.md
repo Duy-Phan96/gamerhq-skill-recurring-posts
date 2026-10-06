@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.2.2`  
+Version: `1.2.3`  
 Runtime API: `1`
 
 ## Purpose
@@ -163,3 +163,8 @@ Version 1.2.2 completes the generic collection binding by declaring:
 Together with `itemIdPayloadKey = postId`, a generic host can discover, read,
 edit, pause/resume and delete Recurring Posts without knowing Recurring Posts
 payload conventions in frontend code.
+
+Version 1.2.3 declares `scheduleHintsPath = schedules`. A generic host can now
+call the declared describe contract, follow the schema-provided path, and render
+the existing interval/daily/weekly hints and presets without hard-coding the
+Recurring Posts response property name.
