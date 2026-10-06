@@ -26,6 +26,8 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 ## Contracts
 
 - [ ] Management API IDs remain versioned and documented, including `recurring-posts.describe.v1`, `recurring-posts.validate.v1`, `recurring-posts.update.v1` and `recurring-posts.delete-preview.v1`.
+- [ ] Management UI Schema V1 still references only declared public Management APIs.
+- [ ] Collection item fields remain host-neutral and cover name, channel, content, schedule and active state.
 - [ ] Event IDs remain versioned and documented.
 - [ ] Breaking payload/behavior changes use a new contract version.
 

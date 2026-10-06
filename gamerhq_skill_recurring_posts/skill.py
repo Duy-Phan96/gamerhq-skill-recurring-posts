@@ -18,6 +18,11 @@ from skill_runtime import (
     SkillCapability,
     SkillEvents,
     ManagementApiContract,
+    ManagementCollectionOperations,
+    ManagementCollectionSchema,
+    ManagementField,
+    ManagementSection,
+    ManagementUiSchema,
     SkillHealth,
     SkillManagementApis,
     SkillManifest,
@@ -47,6 +52,81 @@ UPDATE_API = "recurring-posts.update.v1"
 SET_ACTIVE_API = "recurring-posts.set-active.v1"
 DELETE_PREVIEW_API = "recurring-posts.delete-preview.v1"
 DELETE_API = "recurring-posts.delete.v1"
+
+MANAGEMENT_UI = ManagementUiSchema(
+    version="1",
+    read_contract=LIST_API,
+    write_contract=CREATE_API,
+    sections=(
+        ManagementSection(
+            id="recurring-posts",
+            title="Recurring Posts",
+            description="Create and manage scheduled Discord messages.",
+            fields=(
+                ManagementField(
+                    key="posts",
+                    label="Recurring Posts",
+                    type="collection",
+                    config_path="posts",
+                    collection=ManagementCollectionSchema(
+                        operations=ManagementCollectionOperations(
+                            list_contract=LIST_API,
+                            create_contract=CREATE_API,
+                            get_contract=GET_API,
+                            validate_contract=VALIDATE_API,
+                            update_contract=UPDATE_API,
+                            set_active_contract=SET_ACTIVE_API,
+                            delete_preview_contract=DELETE_PREVIEW_API,
+                            delete_contract=DELETE_API,
+                        ),
+                        item_fields=(
+                            ManagementField(
+                                key="name",
+                                label="Name",
+                                type="string",
+                                config_path="name",
+                                description="A short internal name for this recurring post.",
+                                required=True,
+                            ),
+                            ManagementField(
+                                key="channel",
+                                label="Destination channel",
+                                type="discord_channel",
+                                config_path="channelId",
+                                required=True,
+                            ),
+                            ManagementField(
+                                key="content",
+                                label="Message",
+                                type="long_text",
+                                config_path="content",
+                                required=True,
+                            ),
+                            ManagementField(
+                                key="schedule",
+                                label="Schedule",
+                                type="schedule",
+                                config_path="schedule",
+                                required=True,
+                            ),
+                            ManagementField(
+                                key="active",
+                                label="Active",
+                                type="boolean",
+                                config_path="active",
+                            ),
+                        ),
+                        item_id_path="id",
+                        title_path="managementSummary.title",
+                        status_path="status",
+                        summary_path="managementSummary.compact",
+                        max_items=MAX_POSTS,
+                    ),
+                ),
+            ),
+        ),
+    ),
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -305,7 +385,7 @@ class RecurringPostsSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Recurring Posts",
-        version="1.1.0",
+        version="1.2.0",
         runtime_api_version="1",
         description="Post configured messages automatically on interval, daily or weekly schedules.",
         author="GamerHQ",
@@ -347,6 +427,7 @@ class RecurringPostsSkill:
                 ManagementApiContract(DELETE_API, "Delete a recurring post."),
             ),
         ),
+        management_ui=MANAGEMENT_UI,
     )
 
     def __init__(self):

@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.1.0`  
+Version: `1.2.0`  
 Runtime API: `1`
 
 ## Purpose
@@ -125,13 +125,26 @@ Recurring Posts follows a small set of portable UX rules:
   `managementSummary` and `quickActions` block so the host can render cards
   with Edit, Pause/Resume and Delete without reconstructing Skill semantics.
 
-## Host UI note
+## Generic Management UI Schema
 
-The current Runtime API 1 `ManagementApiContract` exposes only an operation ID
-and description; it does not provide a public form/input-schema contract.
-The Skill now exposes its own host-neutral UX hints through
-`recurring-posts.describe.v1`, including **Every N minutes (min. 15)** and the
-underlying schedule payload field. This is enough for a GamerHQ integration to
-build a good Skill-specific flow while the Skill's 15-minute server-side
-validation remains authoritative. A future generic Skill Builder needs a public
-management-form schema in the SDK rather than private host assumptions.
+Version 1.2.0 declares the existing Recurring Posts management surface through
+the public Management UI Schema V1.
+
+The Skill exposes one generic `collection` of recurring posts. Its schema maps
+to the already-versioned Management APIs for list, create, read, validate,
+update, pause/resume, delete preview and delete.
+
+Item fields are declared as portable types:
+
+- name → `string`
+- destination channel → `discord_channel`
+- message → `long_text`
+- schedule → `schedule`
+- active state → `boolean`
+
+This lets a host or web client build the Recurring Posts UI without importing
+private Skill models or writing a Skill-specific React page.
+
+`recurring-posts.describe.v1` remains useful for richer schedule hints,
+presets and limits. Server-side validation remains authoritative, including the
+15-minute minimum interval.
