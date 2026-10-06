@@ -9,6 +9,7 @@ from gamerhq_skill_recurring_posts import (
     GET_API,
     HANDLER_ID,
     LIST_API,
+    MANAGEMENT_UI,
     MIN_INTERVAL_SECONDS,
     SET_ACTIVE_API,
     UPDATE_API,
@@ -134,6 +135,39 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         )
         values.update(overrides)
         return await self.skill.create_post(self.ctx, **values)
+
+    def test_manifest_declares_generic_collection_management_schema(self):
+        schema = self.skill.manifest.management_ui
+        self.assertIs(schema, MANAGEMENT_UI)
+        self.assertEqual(schema.version, "1")
+        self.assertEqual(schema.read_contract, LIST_API)
+        self.assertEqual(schema.write_contract, CREATE_API)
+
+        self.assertEqual(len(schema.sections), 1)
+        collection_field = schema.sections[0].fields[0]
+        self.assertEqual(collection_field.type, "collection")
+        self.assertEqual(collection_field.config_path, "posts")
+
+        collection = collection_field.collection
+        self.assertIsNotNone(collection)
+        self.assertEqual(collection.operations.list_contract, LIST_API)
+        self.assertEqual(collection.operations.create_contract, CREATE_API)
+        self.assertEqual(collection.operations.get_contract, GET_API)
+        self.assertEqual(collection.operations.validate_contract, VALIDATE_API)
+        self.assertEqual(collection.operations.update_contract, UPDATE_API)
+        self.assertEqual(collection.operations.set_active_contract, SET_ACTIVE_API)
+        self.assertEqual(collection.operations.delete_preview_contract, DELETE_PREVIEW_API)
+        self.assertEqual(collection.operations.delete_contract, DELETE_API)
+        self.assertEqual(collection.max_items, 20)
+        self.assertEqual(collection.title_path, "managementSummary.title")
+        self.assertEqual(collection.summary_path, "managementSummary.compact")
+
+        fields = {field.config_path: field for field in collection.item_fields}
+        self.assertEqual(fields["name"].type, "string")
+        self.assertEqual(fields["channelId"].type, "discord_channel")
+        self.assertEqual(fields["content"].type, "long_text")
+        self.assertEqual(fields["schedule"].type, "schedule")
+        self.assertEqual(fields["active"].type, "boolean")
 
     async def test_registration_binds_scheduler_and_management_contracts(self):
         scheduler = FakeRegistrationScheduler()
