@@ -2,6 +2,12 @@
 
 All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
+## 1.2.3
+
+- Declared `schedules` as the generic schedule hints path for the collection describe response.
+- Allows generic hosts to locate schedule presets and constraints without hard-coding Recurring Posts response keys.
+- No storage, scheduler, capability or Management API behavior changes.
+
 ## 1.2.2
 
 - Declared `recurring-posts.describe.v1` as the generic collection describe contract.
