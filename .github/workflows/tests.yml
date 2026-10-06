@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  GAMERHQ_SDK_REF: 081cd6a4d95b2832cb89d709cee3cd3af6270c3f
+  GAMERHQ_SDK_REF: 8c44b142d35298bf6559f0ab5cfe83c731cafb67
 
 jobs:
   test:
