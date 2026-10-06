@@ -117,6 +117,7 @@ MANAGEMENT_UI = ManagementUiSchema(
                             ),
                         ),
                         item_id_path="id",
+                        item_id_payload_key="postId",
                         title_path="managementSummary.title",
                         status_path="status",
                         summary_path="managementSummary.compact",
@@ -385,7 +386,7 @@ class RecurringPostsSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Recurring Posts",
-        version="1.2.0",
+        version="1.2.1",
         runtime_api_version="1",
         description="Post configured messages automatically on interval, daily or weekly schedules.",
         author="GamerHQ",

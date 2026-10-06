@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.2.0`  
+Version: `1.2.1`  
 Runtime API: `1`
 
 ## Purpose
@@ -148,3 +148,10 @@ private Skill models or writing a Skill-specific React page.
 `recurring-posts.describe.v1` remains useful for richer schedule hints,
 presets and limits. Server-side validation remains authoritative, including the
 15-minute minimum interval.
+
+
+### Collection item identity payload
+
+Version 1.2.1 declares `postId` as the collection item identity payload key.
+Generic hosts can therefore read an item ID from `id` and safely call
+get/update/pause/delete contracts without Recurring Posts-specific frontend code.
