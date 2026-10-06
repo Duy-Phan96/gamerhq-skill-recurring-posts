@@ -2,6 +2,15 @@
 
 All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
+## 1.2.0
+
+- Added Management UI Schema V1 as a declarative description of the existing Recurring Posts management surface.
+- Declares the post list as a generic collection with list/create/get/validate/update/pause-resume/delete-preview/delete contracts.
+- Declares item fields for name, Discord channel, message content, schedule and active state.
+- Keeps `posts.v1`, scheduler identities and all existing Management API IDs unchanged.
+- Enables generic web/host clients to render Recurring Posts without importing private Skill implementation code.
+- No new Discord permissions or host capabilities are required.
+
 ## 1.1.0
 
 - Added `recurring-posts.update.v1` for in-place editing of existing recurring posts.
