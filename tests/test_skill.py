@@ -159,6 +159,7 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(collection.operations.set_active_contract, SET_ACTIVE_API)
         self.assertEqual(collection.item_id_payload_key, "postId")
         self.assertEqual(collection.item_read_path, "post")
+        self.assertEqual(collection.schedule_hints_path, "schedules")
         self.assertEqual(collection.operations.delete_preview_contract, DELETE_PREVIEW_API)
         self.assertEqual(collection.operations.delete_contract, DELETE_API)
         self.assertEqual(collection.max_items, 20)
