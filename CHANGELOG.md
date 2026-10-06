@@ -2,6 +2,13 @@
 
 All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
+## 1.2.2
+
+- Declared `recurring-posts.describe.v1` as the generic collection describe contract.
+- Declared `post` as the single-item management response path.
+- Completes the schema metadata needed for generic host/web collection CRUD and richer UX hints.
+- No storage, scheduler, capability or Management API behavior changes.
+
 ## 1.2.1
 
 - Declared `postId` as the generic collection item identity payload key.
