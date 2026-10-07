@@ -47,15 +47,16 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Python 3.14 CI passes.
 - [ ] No Discord token or production state is required by tests.
 
-## Release
+## Independent Skill release
 
 - [ ] SDK dependency is pinned to a reviewed compatible release/commit.
 - [ ] Package source/release is immutable and reviewable.
 - [ ] Changelog/release notes describe user-visible changes.
-- [ ] GamerHQ deployment pins the intended Skill release/commit.
-- [ ] Rollback target is known before production rollout.
+- [ ] Release status is reported for this repository only.
+- [ ] Any consumer integration/deployment work is reported as a handoff, not implemented here.
+- [ ] No production secrets, database state or deployment actions are part of this repository's release.
 
-## Live acceptance after reviewed deployment
+## Consumer acceptance guidance (handoff only)
 
 - [ ] Existing configuration is visible.
 - [ ] Existing scheduled job survives restart.
@@ -72,4 +73,9 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Disable/re-enable the Skill and confirm configuration remains.
 - [ ] `/server manage → Skills` shows external package provenance.
 
-Live acceptance is not a replacement for offline CI.
+These checks are guidance for a consuming repository after it independently
+chooses to integrate this Skill. This repository does not perform the consumer's
+deployment or production acceptance.
+
+Offline CI in this repository remains the authoritative release gate for the
+Skill package itself.

@@ -7,6 +7,16 @@
 - Version: `1.3.0`
 - Runtime API: `1`
 
+## Repository boundary
+
+This repository owns the Recurring Posts domain implementation and its public
+Skill contracts. It does not own the GamerHQ Host, public Runtime/SDK
+implementation, gamerhq-web, other Skills or production deployment.
+
+Read-only inspection of released/public upstream contracts is allowed for
+compatibility. Missing upstream behavior is handled through a handoff rather than
+a cross-repository implementation.
+
 ## Purpose
 
 Schedule recurring Discord messages without a Skill-owned background scheduler.
@@ -139,9 +149,11 @@ metadata through `recurring-posts.describe.v1` instead of importing host UI
 objects. This solves the immediate Skill UX need while keeping the package
 portable.
 
-The missing future SDK/host contract is a host-neutral management-form schema
-that can declare an interval-minutes input and its minimum without importing
-Skill-private classes or Discord UI objects.
+Management UI Schema V1 now covers the generic form/collection surface used by
+this Skill. A future generic arbitrary collection-item action contract would
+improve portable rendering of actions such as test-send; that is an upstream
+public-contract concern and must be handled by handoff rather than by changing
+Host/SDK internals from this repository.
 
 ## Delivery model
 
