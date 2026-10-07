@@ -4,7 +4,7 @@
 
 - Skill ID: `recurring-posts`
 - Package: `gamerhq-skill-recurring-posts`
-- Version: `1.1.0`
+- Version: `1.3.0`
 - Runtime API: `1`
 
 ## Purpose
@@ -35,7 +35,7 @@ Schedule recurring Discord messages without a Skill-owned background scheduler.
 
 ## Management APIs
 
-- list/get/create/describe/validate/update/set-active/delete-preview/delete v1 contracts.
+- list/get/create/describe/validate/test-send/update/set-active/delete-preview/delete v1 contracts.
 
 ## UX design principles
 
@@ -54,6 +54,8 @@ The Skill optimizes for a review-first administrative flow:
 8. Destructive deletion is preceded by a read-only impact preview.
 9. The list contract returns UI-ready summaries and actions so hosts do not need
    to infer Skill behavior from raw storage-shaped fields.
+10. A one-shot test send is explicitly separated from persisted Scheduler
+    delivery and recurring send events.
 
 `recurring-posts.describe.v1` is read-only and returns small JSON-like UX hints:
 limits, field labels/help, schedule payload fields, weekday choices and the
@@ -74,6 +76,28 @@ non-persisted management metadata:
 
 `describe.v1` also declares a compact-card list presentation hint. These hints
 remain host-neutral JSON and do not contain Discord.py UI objects.
+
+## Test send
+
+`recurring-posts.test-send.v1` sends one immediate message through the public
+Discord port. Requests use exactly one of:
+
+- saved mode: `{"postId": "..."}`
+- draft mode: `{"channelId": 123, "content": "..."}`
+
+The operation validates the destination and Discord message-length rules. It does
+not create/remove/update Scheduler jobs, does not mutate `posts.v1`, does not
+touch `pendingSlot`, `lastSentSlot` or `lastMessageId`, and does not emit
+`recurring-post.sent.v1`. On a confirmed send it writes the administrative
+audit action `post-test-sent`.
+
+There is no automatic retry. As with any external side effect, a process failure
+around delivery cannot provide an exactly-once guarantee; callers should not
+blindly retry an uncertain result.
+
+Management UI Schema V1 currently has no standardized arbitrary collection-item
+action field. The Skill therefore exposes test-send through `describe.v1` and
+`quickActions` without extending or coupling to private host UI contracts.
 
 ## Schedule presets
 
@@ -127,4 +151,4 @@ Discord delivery.
 
 ## Security/privacy impact
 
-Edit adds no capability and no new data class. Channel validation still goes through the public Discord port, audit writes remain administrative metadata only, and cross-guild access is not introduced.
+Edit/test-send adds no capability and no new persisted data class. Channel validation still goes through the public Discord port, audit writes remain administrative metadata only, and cross-guild access is not introduced.
