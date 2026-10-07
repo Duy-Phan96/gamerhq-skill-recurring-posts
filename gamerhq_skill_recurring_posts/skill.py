@@ -48,6 +48,7 @@ GET_API = "recurring-posts.get.v1"
 CREATE_API = "recurring-posts.create.v1"
 DESCRIBE_API = "recurring-posts.describe.v1"
 VALIDATE_API = "recurring-posts.validate.v1"
+TEST_SEND_API = "recurring-posts.test-send.v1"
 UPDATE_API = "recurring-posts.update.v1"
 SET_ACTIVE_API = "recurring-posts.set-active.v1"
 DELETE_PREVIEW_API = "recurring-posts.delete-preview.v1"
@@ -197,19 +198,26 @@ def _validated_schedule(value: Mapping[str, Any]) -> dict[str, Any]:
     return schedule_to_dict(schedule)
 
 
+def _validate_message_target(*, channel_id: int, content: str) -> tuple[int, str]:
+    normalized_channel_id = int(channel_id)
+    normalized_content = str(content).strip()
+    if normalized_channel_id <= 0:
+        raise ValueError("Recurring Post channel must be positive.")
+    if not normalized_content:
+        raise ValueError("Recurring Post content is required.")
+    if len(normalized_content) > MAX_CONTENT_CHARS:
+        raise ValueError(
+            f"Recurring Post content exceeds Discord's {MAX_CONTENT_CHARS} character limit."
+        )
+    return normalized_channel_id, normalized_content
+
+
 def _validate_post(post: RecurringPost) -> None:
     if not post.id or len(post.id) > 64:
         raise ValueError("Recurring Post id is invalid.")
     if not post.name.strip() or len(post.name) > MAX_NAME_CHARS:
         raise ValueError(f"Recurring Post name must be 1-{MAX_NAME_CHARS} characters.")
-    if post.channel_id <= 0:
-        raise ValueError("Recurring Post channel must be positive.")
-    if not post.content.strip():
-        raise ValueError("Recurring Post content is required.")
-    if len(post.content) > MAX_CONTENT_CHARS:
-        raise ValueError(
-            f"Recurring Post content exceeds Discord's {MAX_CONTENT_CHARS} character limit."
-        )
+    _validate_message_target(channel_id=post.channel_id, content=post.content)
     _validated_schedule(post.schedule)
 
 
@@ -253,6 +261,14 @@ def _post_quick_actions(post: RecurringPost) -> list[dict[str, Any]]:
             "flow": "review-edit",
         },
         active_action,
+        {
+            "id": "test-send",
+            "label": "Send test",
+            "managementApi": TEST_SEND_API,
+            "payload": {"postId": post.id},
+            "destructive": False,
+            "flow": "confirm-test-send",
+        },
         {
             "id": "delete",
             "label": "Delete",
@@ -372,6 +388,18 @@ def _ux_contract() -> dict[str, Any]:
             },
         },
         "recommendedFlow": ["review", "validate", "confirm"],
+        "actions": {
+            "testSend": {
+                "label": "Send test",
+                "managementApi": TEST_SEND_API,
+                "help": (
+                    "Send one message immediately without creating or changing a "
+                    "recurring scheduler job."
+                ),
+                "savedPayload": {"postId": "<post-id>"},
+                "draftPayload": {"channelId": "<channel-id>", "content": "<message>"},
+            }
+        },
         "listPresentation": {
             "style": "compact-cards",
             "primaryField": "managementSummary.title",
@@ -389,7 +417,7 @@ class RecurringPostsSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Recurring Posts",
-        version="1.2.3",
+        version="1.3.0",
         runtime_api_version="1",
         description="Post configured messages automatically on interval, daily or weekly schedules.",
         author="GamerHQ",
@@ -422,6 +450,10 @@ class RecurringPostsSkill:
                     VALIDATE_API,
                     "Validate and preview a recurring post without persisting it.",
                 ),
+                ManagementApiContract(
+                    TEST_SEND_API,
+                    "Send one immediate test message without changing recurring state.",
+                ),
                 ManagementApiContract(UPDATE_API, "Update an existing recurring post without changing its identity."),
                 ManagementApiContract(SET_ACTIVE_API, "Pause or resume a recurring post."),
                 ManagementApiContract(
@@ -447,6 +479,7 @@ class RecurringPostsSkill:
         ctx.management.expose(CREATE_API, self._manage_create)
         ctx.management.expose(DESCRIBE_API, self._manage_describe)
         ctx.management.expose(VALIDATE_API, self._manage_validate)
+        ctx.management.expose(TEST_SEND_API, self._manage_test_send)
         ctx.management.expose(UPDATE_API, self._manage_update)
         ctx.management.expose(SET_ACTIVE_API, self._manage_set_active)
         ctx.management.expose(DELETE_PREVIEW_API, self._manage_delete_preview)
@@ -506,6 +539,55 @@ class RecurringPostsSkill:
         view.pop("lastSentSlot", None)
         view.pop("lastMessageId", None)
         return {"valid": True, "preview": view}
+
+    async def _manage_test_send(self, ctx, payload) -> Mapping[str, Any]:
+        post_id = str(payload.get("postId", "")).strip()
+        has_draft_target = "channelId" in payload or "content" in payload
+        if post_id and has_draft_target:
+            raise ValueError("Use either postId or draft channelId/content for a test send.")
+
+        if post_id:
+            post = await self.get_post(ctx, post_id)
+            channel_id, content = _validate_message_target(
+                channel_id=post.channel_id,
+                content=post.content,
+            )
+            source = "saved"
+        else:
+            try:
+                draft_channel_id = int(payload["channelId"])
+                draft_content = str(payload["content"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Test send requires postId or draft channelId and content."
+                ) from exc
+            channel_id, content = _validate_message_target(
+                channel_id=draft_channel_id,
+                content=draft_content,
+            )
+            source = "draft"
+
+        await ctx.discord.get_channel(channel_id=channel_id)
+        message_id = int(
+            await ctx.discord.send_message(
+                channel_id=channel_id,
+                content=content,
+            )
+        )
+        await ctx.audit.write(
+            action="post-test-sent",
+            target=post_id or None,
+            metadata={"channelId": channel_id, "source": source},
+        )
+        response: dict[str, Any] = {
+            "sent": True,
+            "source": source,
+            "channelId": channel_id,
+            "messageId": message_id,
+        }
+        if post_id:
+            response["postId"] = post_id
+        return response
 
     async def _manage_create(self, ctx, payload) -> Mapping[str, Any]:
         try:

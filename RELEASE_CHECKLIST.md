@@ -25,7 +25,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 
 ## Contracts
 
-- [ ] Management API IDs remain versioned and documented, including `recurring-posts.describe.v1`, `recurring-posts.validate.v1`, `recurring-posts.update.v1` and `recurring-posts.delete-preview.v1`.
+- [ ] Management API IDs remain versioned and documented, including `recurring-posts.describe.v1`, `recurring-posts.validate.v1`, `recurring-posts.test-send.v1`, `recurring-posts.update.v1` and `recurring-posts.delete-preview.v1`.
 - [ ] Management UI Schema V1 still references only declared public Management APIs.
 - [ ] Collection item fields remain host-neutral and cover name, channel, content, schedule and active state.
 - [ ] Event IDs remain versioned and documented.
@@ -40,7 +40,9 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] UX metadata still exposes the 15-minute interval minimum and exact schedule payload fields.
 - [ ] Interval presets are valid convenience schedules and do not impose a maximum.
 - [ ] Delete preview is read-only and accurately states configuration/job/message impact.
-- [ ] List items expose the correct Edit, Pause/Resume and Delete-preview actions without persisting derived UI metadata.
+- [ ] List items expose the correct Edit, Pause/Resume, Send test and Delete-preview actions without persisting derived UI metadata.
+- [ ] Test-send leaves storage, Scheduler jobs, recurring delivery slots and recurring-send events unchanged.
+- [ ] Test-send failure does not record a successful test-send audit action.
 - [ ] Python 3.12 CI passes.
 - [ ] Python 3.14 CI passes.
 - [ ] No Discord token or production state is required by tests.
@@ -62,6 +64,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Validate a harmless draft and confirm no post/job is created.
 - [ ] Create one harmless recurring post.
 - [ ] Edit its name/message/schedule and confirm the post ID and `post:<post-id>` job key stay unchanged.
+- [ ] Send one test from a paused post and confirm it does not activate or reschedule the post.
 - [ ] Confirm the interval UI communicates the 15-minute minimum once the host UI contract/integration supports it.
 - [ ] Pause and resume it.
 - [ ] Preview deletion and verify no state changes before confirmation.
