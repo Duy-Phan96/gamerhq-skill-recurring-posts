@@ -4,7 +4,7 @@
 
 - Skill ID: `recurring-posts`
 - Package: `gamerhq-skill-recurring-posts`
-- Version: `1.3.0`
+- Version: `1.3.1`
 - Runtime API: `1`
 
 ## Repository boundary
@@ -66,6 +66,8 @@ The Skill optimizes for a review-first administrative flow:
    to infer Skill behavior from raw storage-shaped fields.
 10. A one-shot test send is explicitly separated from persisted Scheduler
     delivery and recurring send events.
+11. Delivery status must reflect only facts represented by persisted delivery
+    state; scheduler slots are never mislabeled as actual send timestamps.
 
 `recurring-posts.describe.v1` is read-only and returns small JSON-like UX hints:
 limits, field labels/help, schedule payload fields, weekday choices and the
@@ -154,6 +156,20 @@ this Skill. A future generic arbitrary collection-item action contract would
 improve portable rendering of actions such as test-send; that is an upstream
 public-contract concern and must be handled by handoff rather than by changing
 Host/SDK internals from this repository.
+
+## Delivery status UX
+
+Management views derive a non-persisted `deliveryStatus` object from the existing
+`pendingSlot`, `lastSentSlot` and `lastMessageId` fields.
+
+- `never-sent`: no confirmed message ID exists.
+- `pending`: a slot is reserved/in flight; previous confirmed delivery metadata
+  remains visible when present.
+- `sent`: a confirmed Discord message ID exists and no delivery is currently pending.
+
+The API names the slot `lastConfirmedScheduledFor`, not `lastSentAt`, because
+`lastSentSlot` records scheduler intent rather than the exact external-delivery
+wall-clock time. No new history table or timestamp is invented.
 
 ## Delivery model
 

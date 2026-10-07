@@ -41,6 +41,9 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Interval presets are valid convenience schedules and do not impose a maximum.
 - [ ] Delete preview is read-only and accurately states configuration/job/message impact.
 - [ ] List items expose the correct Edit, Pause/Resume, Send test and Delete-preview actions without persisting derived UI metadata.
+- [ ] Delivery status derives only from existing delivery fields and is never persisted.
+- [ ] Scheduler slots are labeled as scheduled-for values, not exact external send timestamps.
+- [ ] Pending status preserves visibility of any prior confirmed message metadata.
 - [ ] Test-send leaves storage, Scheduler jobs, recurring delivery slots and recurring-send events unchanged.
 - [ ] Test-send failure does not record a successful test-send audit action.
 - [ ] Python 3.12 CI passes.

@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.3.0`  
+Version: `1.3.1`  
 Runtime API: `1`
 
 ## Purpose
@@ -133,6 +133,9 @@ Recurring Posts follows a small set of portable UX rules:
   with Edit, Pause/Resume, Send test and Delete without reconstructing Skill semantics.
 - **Safe test delivery:** admins can verify a message once before activation
   without creating recurring state or pretending the test was a scheduled send.
+- **Truthful delivery status:** management views distinguish Never sent,
+  Delivery pending and Last send confirmed without pretending the scheduler slot
+  is the actual Discord send timestamp.
 
 ## Generic Management UI Schema
 
@@ -204,3 +207,20 @@ work here, this project stops at a handoff instead of modifying that repository.
 
 A successful release here means the Skill is independently releasable. It does
 not mean any GamerHQ server should automatically update.
+
+
+## Delivery status
+
+Version 1.3.1 adds derived `deliveryStatus` metadata to list/get management
+responses. It is intentionally non-persisted and uses only the existing delivery
+state already stored in `posts.v1`.
+
+States:
+
+- `never-sent` — no confirmed Discord delivery exists;
+- `pending` — a scheduler slot is reserved/in flight;
+- `sent` — the most recent recorded delivery was confirmed by a Discord message ID.
+
+The response exposes `pendingScheduledFor`, `lastConfirmedScheduledFor` and
+`lastMessageId`. The field name says **scheduled for** deliberately: the existing
+`lastSentSlot` is the scheduler slot, not a trustworthy wall-clock send time.

@@ -422,6 +422,66 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.scheduler.jobs, jobs_before)
         self.assertEqual(self.audit.calls, audit_before)
 
+    async def test_management_view_reports_never_sent_without_guessing_timestamp(self):
+        post = await self.create(active=False)
+
+        item = (await self.skill._manage_get(self.ctx, {"postId": post.id}))["post"]
+
+        self.assertEqual(item["deliveryStatus"]["state"], "never-sent")
+        self.assertEqual(item["deliveryStatus"]["label"], "Never sent")
+        self.assertFalse(item["deliveryStatus"]["hasConfirmedDelivery"])
+        self.assertIsNone(item["deliveryStatus"]["lastConfirmedScheduledFor"])
+        self.assertIsNone(item["deliveryStatus"]["lastMessageId"])
+        self.assertEqual(item["managementSummary"]["delivery"], "Never sent")
+        self.assertNotIn("deliveryStatus", self.storage.values["posts.v1"][post.id])
+
+    async def test_management_view_reports_confirmed_delivery_from_existing_state(self):
+        post = await self.create()
+        job = SimpleNamespace(payload={"postId": post.id}, next_run_at=12345)
+
+        await self.skill._execute(self.ctx, job)
+        item = (await self.skill._manage_get(self.ctx, {"postId": post.id}))["post"]
+
+        self.assertEqual(item["deliveryStatus"]["state"], "sent")
+        self.assertEqual(item["deliveryStatus"]["label"], "Last send confirmed")
+        self.assertTrue(item["deliveryStatus"]["hasConfirmedDelivery"])
+        self.assertEqual(item["deliveryStatus"]["lastConfirmedScheduledFor"], 12345)
+        self.assertEqual(item["deliveryStatus"]["lastMessageId"], 9001)
+        self.assertIsNone(item["deliveryStatus"]["pendingScheduledFor"])
+        self.assertEqual(item["managementSummary"]["delivery"], "Last send confirmed")
+
+    async def test_management_view_prioritizes_pending_delivery_without_losing_last_confirmation(self):
+        self.storage.values["posts.v1"] = {
+            "post-1": {
+                "id": "post-1",
+                "name": "Pending reminder",
+                "channelId": 10,
+                "content": "Pending.",
+                "schedule": {"type": "interval", "seconds": MIN_INTERVAL_SECONDS},
+                "active": True,
+                "pendingSlot": 222,
+                "lastSentSlot": 111,
+                "lastMessageId": 9001,
+            }
+        }
+
+        item = (await self.skill._manage_get(self.ctx, {"postId": "post-1"}))["post"]
+
+        self.assertEqual(item["deliveryStatus"]["state"], "pending")
+        self.assertEqual(item["deliveryStatus"]["label"], "Delivery pending")
+        self.assertEqual(item["deliveryStatus"]["pendingScheduledFor"], 222)
+        self.assertEqual(item["deliveryStatus"]["lastConfirmedScheduledFor"], 111)
+        self.assertEqual(item["deliveryStatus"]["lastMessageId"], 9001)
+        self.assertTrue(item["deliveryStatus"]["hasConfirmedDelivery"])
+
+    async def test_list_presentation_declares_delivery_summary_field(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+
+        self.assertIn(
+            "managementSummary.delivery",
+            result["listPresentation"]["secondaryFields"],
+        )
+
     async def test_list_returns_compact_management_summary_and_quick_actions(self):
         post = await self.create()
 

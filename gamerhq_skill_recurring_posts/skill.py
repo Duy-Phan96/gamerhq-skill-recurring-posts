@@ -280,18 +280,50 @@ def _post_quick_actions(post: RecurringPost) -> list[dict[str, Any]]:
     ]
 
 
+def _delivery_status(post: RecurringPost) -> dict[str, Any]:
+    if post.pending_slot is not None:
+        return {
+            "state": "pending",
+            "label": "Delivery pending",
+            "pendingScheduledFor": post.pending_slot,
+            "lastConfirmedScheduledFor": post.last_sent_slot,
+            "lastMessageId": post.last_message_id,
+            "hasConfirmedDelivery": post.last_message_id is not None,
+        }
+    if post.last_message_id is not None:
+        return {
+            "state": "sent",
+            "label": "Last send confirmed",
+            "pendingScheduledFor": None,
+            "lastConfirmedScheduledFor": post.last_sent_slot,
+            "lastMessageId": post.last_message_id,
+            "hasConfirmedDelivery": True,
+        }
+    return {
+        "state": "never-sent",
+        "label": "Never sent",
+        "pendingScheduledFor": None,
+        "lastConfirmedScheduledFor": None,
+        "lastMessageId": None,
+        "hasConfirmedDelivery": False,
+    }
+
+
 def _post_management_view(post: RecurringPost) -> dict[str, Any]:
     schedule_summary = _schedule_summary(post.schedule)
     status = "active" if post.active else "paused"
+    delivery = _delivery_status(post)
     return {
         **post.to_dict(),
         "status": status,
         "scheduleSummary": schedule_summary,
+        "deliveryStatus": delivery,
         "managementSummary": {
             "title": post.name,
             "status": status,
             "channelId": post.channel_id,
             "schedule": schedule_summary,
+            "delivery": delivery["label"],
             "compact": f"{'Active' if post.active else 'Paused'} · {schedule_summary}",
         },
         "quickActions": _post_quick_actions(post),
@@ -407,6 +439,7 @@ def _ux_contract() -> dict[str, Any]:
                 "managementSummary.status",
                 "managementSummary.channelId",
                 "managementSummary.schedule",
+                "managementSummary.delivery",
             ],
             "actionsField": "quickActions",
         },
@@ -417,7 +450,7 @@ class RecurringPostsSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Recurring Posts",
-        version="1.3.0",
+        version="1.3.1",
         runtime_api_version="1",
         description="Post configured messages automatically on interval, daily or weekly schedules.",
         author="GamerHQ",
