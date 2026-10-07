@@ -4,6 +4,14 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+## 1.3.1
+
+- Added derived `deliveryStatus` metadata to list/get management views.
+- Distinguishes `never-sent`, `pending` and `sent` using existing delivery state.
+- Added readable delivery text to compact management summaries.
+- Uses `lastConfirmedScheduledFor` rather than claiming `lastSentSlot` is an exact send timestamp.
+- No storage migration, scheduler change, event change or new capability.
+
 - Clarified autonomous repository ownership and independent release responsibilities.
 - Removed wording that implied this Skill repository controls GamerHQ Host integration or production deployment.
 - Standardized cross-repository work as read-only contract inspection plus explicit handoffs.
