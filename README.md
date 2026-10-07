@@ -92,7 +92,9 @@ This Skill now lives in its own Git repository. Changing repository location mus
 
 ## Development
 
-This is the standalone reference repository for an external GamerHQ Skill. GamerHQ installs a reviewed, pinned commit of this repository during its image build.
+This is the standalone repository for an external GamerHQ Skill. It is versioned
+and released independently. A compatible consumer may choose to install or pin a
+reviewed immutable release/commit through its own release process.
 
 Run the GamerHQ SDK conformance/source-audit checks and the package's offline
 tests before release.
@@ -105,8 +107,6 @@ Before changing behavior, review:
 - `SKILL_DESIGN.md` — architecture and contract inventory;
 - `AGENTS.md` — repository rules for developers and coding agents;
 - `RELEASE_CHECKLIST.md` — release and deployment readiness.
-
-The host-side extraction/deployment rules are documented in the GamerHQ repository under `docs/skills/recurring-posts-extraction.md`.
 
 The package must remain independently testable without a Discord token or
 production database.
@@ -190,3 +190,17 @@ The current generic Management UI Schema V1 has no standardized arbitrary item-a
 slot for test-send. Recurring Posts therefore advertises the action through its
 existing host-neutral `describe.v1` metadata and per-item `quickActions` until the
 SDK adds a generic action contract.
+
+
+## Repository ownership
+
+This repository owns only the Recurring Posts Skill: its implementation, public
+Skill contracts, tests, documentation and independent release lifecycle.
+
+It does not own GamerHQ Host, gamerhq-web, another Skill repository, production
+infrastructure or deployment decisions. External projects are consumed only
+through released/public contracts. If a missing Host/SDK/web capability blocks
+work here, this project stops at a handoff instead of modifying that repository.
+
+A successful release here means the Skill is independently releasable. It does
+not mean any GamerHQ server should automatically update.
