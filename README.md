@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.2.3`  
+Version: `1.3.0`  
 Runtime API: `1`
 
 ## Purpose
@@ -27,6 +27,7 @@ capabilities and the shared Skill Scheduler.
 - `recurring-posts.create.v1`
 - `recurring-posts.describe.v1`
 - `recurring-posts.validate.v1`
+- `recurring-posts.test-send.v1`
 - `recurring-posts.update.v1`
 - `recurring-posts.set-active.v1`
 - `recurring-posts.delete-preview.v1`
@@ -69,6 +70,12 @@ contains a compact summary with title, status, channel ID and readable schedule,
 plus host-neutral quick-action descriptors. Edit starts a review flow,
 Pause/Resume maps to `set-active.v1`, and Delete routes through the preview
 contract first.
+
+A host may also call `recurring-posts.test-send.v1` to send one immediate
+test message. It supports either a saved post (`postId`) or an unsaved draft
+(`channelId` + `content`). Test sends do not create/update Scheduler jobs,
+do not change `posts.v1`, do not update recurring delivery slots, and do not
+emit `recurring-post.sent.v1`. Successful test sends are audited separately.
 
 Before a destructive delete, a host should call
 `recurring-posts.delete-preview.v1`. It returns the affected post, a warning,
@@ -123,7 +130,9 @@ Recurring Posts follows a small set of portable UX rules:
   before the existing delete operation is invoked.
 - **Daily management stays compact:** list responses include a small
   `managementSummary` and `quickActions` block so the host can render cards
-  with Edit, Pause/Resume and Delete without reconstructing Skill semantics.
+  with Edit, Pause/Resume, Send test and Delete without reconstructing Skill semantics.
+- **Safe test delivery:** admins can verify a message once before activation
+  without creating recurring state or pretending the test was a scheduled send.
 
 ## Generic Management UI Schema
 
@@ -168,3 +177,16 @@ Version 1.2.3 declares `scheduleHintsPath = schedules`. A generic host can now
 call the declared describe contract, follow the schema-provided path, and render
 the existing interval/daily/weekly hints and presets without hard-coding the
 Recurring Posts response property name.
+
+
+## Test sends
+
+Version 1.3.0 adds `recurring-posts.test-send.v1`. The operation is intentionally
+outside persisted scheduling semantics: it performs one explicit Discord send,
+returns the resulting message ID, writes a `post-test-sent` audit record after a
+confirmed send, and leaves recurring configuration/delivery state unchanged.
+
+The current generic Management UI Schema V1 has no standardized arbitrary item-action
+slot for test-send. Recurring Posts therefore advertises the action through its
+existing host-neutral `describe.v1` metadata and per-item `quickActions` until the
+SDK adds a generic action contract.
