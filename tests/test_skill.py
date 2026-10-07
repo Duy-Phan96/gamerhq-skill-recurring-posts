@@ -12,6 +12,7 @@ from gamerhq_skill_recurring_posts import (
     MANAGEMENT_UI,
     MIN_INTERVAL_SECONDS,
     SET_ACTIVE_API,
+    TEST_SEND_API,
     UPDATE_API,
     VALIDATE_API,
     RecurringPostsSkill,
@@ -182,7 +183,7 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tuple(scheduler.handlers), (HANDLER_ID,))
         self.assertEqual(
             set(management.handlers),
-            {LIST_API, GET_API, CREATE_API, DESCRIBE_API, VALIDATE_API, UPDATE_API, SET_ACTIVE_API, DELETE_PREVIEW_API, DELETE_API},
+            {LIST_API, GET_API, CREATE_API, DESCRIBE_API, VALIDATE_API, TEST_SEND_API, UPDATE_API, SET_ACTIVE_API, DELETE_PREVIEW_API, DELETE_API},
         )
 
     async def test_describe_exposes_host_neutral_ux_constraints(self):
@@ -198,6 +199,109 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.skill.list_posts(self.ctx), ())
         self.assertEqual(self.scheduler.jobs, {})
         self.assertEqual(self.audit.calls, [])
+
+    async def test_describe_exposes_test_send_action(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+        action = result["actions"]["testSend"]
+
+        self.assertEqual(action["managementApi"], TEST_SEND_API)
+        self.assertEqual(action["label"], "Send test")
+        self.assertEqual(action["savedPayload"], {"postId": "<post-id>"})
+        self.assertEqual(
+            action["draftPayload"],
+            {"channelId": "<channel-id>", "content": "<message>"},
+        )
+
+    async def test_test_send_saved_post_does_not_change_recurring_state(self):
+        post = await self.create(active=False)
+        stored_before = self.storage.values["posts.v1"].copy()
+        jobs_before = dict(self.scheduler.jobs)
+        events_before = list(self.events.events)
+        audit_count_before = len(self.audit.calls)
+
+        result = await self.skill._manage_test_send(
+            self.ctx,
+            {"postId": post.id},
+        )
+
+        self.assertTrue(result["sent"])
+        self.assertEqual(result["source"], "saved")
+        self.assertEqual(result["postId"], post.id)
+        self.assertEqual(result["channelId"], 10)
+        self.assertEqual(result["messageId"], 9001)
+        self.assertEqual(self.discord.sent, [(10, "Please remember the rules.")])
+        self.assertEqual(self.storage.values["posts.v1"], stored_before)
+        self.assertEqual(self.scheduler.jobs, jobs_before)
+        self.assertEqual(self.events.events, events_before)
+        self.assertEqual(len(self.audit.calls), audit_count_before + 1)
+        self.assertEqual(self.audit.calls[-1]["action"], "post-test-sent")
+
+    async def test_test_send_draft_is_one_shot_and_does_not_persist(self):
+        result = await self.skill._manage_test_send(
+            self.ctx,
+            {"channelId": 10, "content": "Draft preview message."},
+        )
+
+        self.assertEqual(
+            result,
+            {
+                "sent": True,
+                "source": "draft",
+                "channelId": 10,
+                "messageId": 9001,
+            },
+        )
+        self.assertEqual(self.discord.sent, [(10, "Draft preview message.")])
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.events.events, [])
+        self.assertEqual(self.audit.calls[-1]["metadata"]["source"], "draft")
+
+    async def test_test_send_rejects_ambiguous_or_invalid_payloads(self):
+        post = await self.create(active=False)
+        sent_before = list(self.discord.sent)
+
+        with self.assertRaisesRegex(ValueError, "either postId or draft"):
+            await self.skill._manage_test_send(
+                self.ctx,
+                {"postId": post.id, "channelId": 10, "content": "Ambiguous"},
+            )
+        with self.assertRaisesRegex(ValueError, "requires postId or draft"):
+            await self.skill._manage_test_send(self.ctx, {})
+        with self.assertRaisesRegex(ValueError, "2000 character limit"):
+            await self.skill._manage_test_send(
+                self.ctx,
+                {"channelId": 10, "content": "x" * 2001},
+            )
+
+        self.assertEqual(self.discord.sent, sent_before)
+
+    async def test_test_send_missing_post_or_channel_fails_closed(self):
+        with self.assertRaisesRegex(KeyError, "does not exist"):
+            await self.skill._manage_test_send(self.ctx, {"postId": "missing"})
+
+        with self.assertRaises(KeyError):
+            await self.skill._manage_test_send(
+                self.ctx,
+                {"channelId": 999, "content": "No destination."},
+            )
+
+        self.assertEqual(self.discord.sent, [])
+        self.assertEqual(self.events.events, [])
+
+    async def test_test_send_delivery_failure_does_not_audit_success(self):
+        self.discord.fail = True
+
+        with self.assertRaisesRegex(RuntimeError, "synthetic"):
+            await self.skill._manage_test_send(
+                self.ctx,
+                {"channelId": 10, "content": "Fail safely."},
+            )
+
+        self.assertEqual(self.audit.calls, [])
+        self.assertEqual(self.events.events, [])
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
 
     async def test_validate_returns_preview_without_persisting_or_scheduling(self):
         result = await self.skill._manage_validate(
@@ -337,6 +441,9 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
             actions["pause"]["payload"],
             {"postId": post.id, "active": False},
         )
+        self.assertEqual(actions["test-send"]["managementApi"], TEST_SEND_API)
+        self.assertEqual(actions["test-send"]["payload"], {"postId": post.id})
+        self.assertFalse(actions["test-send"]["destructive"])
         self.assertTrue(actions["delete"]["destructive"])
         self.assertEqual(actions["delete"]["managementApi"], DELETE_PREVIEW_API)
 
