@@ -2,6 +2,16 @@
 
 All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
+## 1.3.0
+
+- Added `recurring-posts.test-send.v1` for one-shot message verification.
+- Test-send supports saved posts by `postId` and unsaved drafts by `channelId` + `content`.
+- Test sends do not mutate `posts.v1`, Scheduler jobs, recurring delivery slots or recurring-send events.
+- Successful test sends write the separate `post-test-sent` audit action.
+- Added Send test to per-item quick actions and describe metadata.
+- Kept capabilities unchanged; existing Discord read/send and audit capabilities are sufficient.
+- Added offline coverage for saved/draft test sends, validation, failure behavior and side-effect isolation.
+
 ## 1.2.3
 
 - Declared `schedules` as the generic schedule hints path for the collection describe response.
