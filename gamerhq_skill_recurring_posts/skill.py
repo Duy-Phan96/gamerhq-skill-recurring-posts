@@ -555,14 +555,16 @@ class RecurringPostsSkill:
             source = "saved"
         else:
             try:
-                channel_id, content = _validate_message_target(
-                    channel_id=int(payload["channelId"]),
-                    content=str(payload["content"]),
-                )
+                draft_channel_id = int(payload["channelId"])
+                draft_content = str(payload["content"])
             except (KeyError, TypeError, ValueError) as exc:
                 raise ValueError(
                     "Test send requires postId or draft channelId and content."
                 ) from exc
+            channel_id, content = _validate_message_target(
+                channel_id=draft_channel_id,
+                content=draft_content,
+            )
             source = "draft"
 
         await ctx.discord.get_channel(channel_id=channel_id)
