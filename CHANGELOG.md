@@ -2,6 +2,13 @@
 
 All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
+## Unreleased
+
+- Clarified autonomous repository ownership and independent release responsibilities.
+- Removed wording that implied this Skill repository controls GamerHQ Host integration or production deployment.
+- Standardized cross-repository work as read-only contract inspection plus explicit handoffs.
+- Added milestone reporting expectations for contracts, storage, capabilities, dependencies and handoffs.
+
 ## 1.3.0
 
 - Added `recurring-posts.test-send.v1` for one-shot message verification.
