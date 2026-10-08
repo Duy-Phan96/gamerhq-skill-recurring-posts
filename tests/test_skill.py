@@ -303,6 +303,41 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.skill.list_posts(self.ctx), ())
         self.assertEqual(self.scheduler.jobs, {})
 
+    async def test_validate_includes_non_authoritative_next_occurrence_preview(self):
+        original_time = __import__("gamerhq_skill_recurring_posts.skill", fromlist=["time"]).time.time
+        module = __import__("gamerhq_skill_recurring_posts.skill", fromlist=["time"])
+        module.time.time = lambda: 1_000
+        try:
+            result = await self.skill._manage_validate(
+                self.ctx,
+                {
+                    "name": "Preview",
+                    "channelId": 10,
+                    "content": "Preview content.",
+                    "schedule": {"type": "interval", "seconds": 30 * 60},
+                    "active": False,
+                },
+            )
+        finally:
+            module.time.time = original_time
+
+        next_occurrence = result["preview"]["nextOccurrence"]
+        self.assertEqual(next_occurrence["scheduledFor"], 2_800)
+        self.assertEqual(next_occurrence["basis"], "calculated-from-now")
+        self.assertFalse(next_occurrence["authoritative"])
+        self.assertEqual(next_occurrence["label"], "Next occurrence preview")
+        self.assertEqual(await self.skill.list_posts(self.ctx), ())
+        self.assertEqual(self.scheduler.jobs, {})
+        self.assertEqual(self.audit.calls, [])
+
+    async def test_describe_marks_schedule_preview_non_authoritative(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+        preview = result["schedulePreview"]
+
+        self.assertEqual(preview["responsePath"], "preview.nextOccurrence")
+        self.assertEqual(preview["basis"], "calculated-from-now")
+        self.assertFalse(preview["authoritative"])
+
     async def test_validate_returns_preview_without_persisting_or_scheduling(self):
         result = await self.skill._manage_validate(
             self.ctx,
