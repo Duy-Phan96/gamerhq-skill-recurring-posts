@@ -4,7 +4,7 @@
 
 - Skill ID: `recurring-posts`
 - Package: `gamerhq-skill-recurring-posts`
-- Version: `1.3.1`
+- Version: `1.3.2`
 - Runtime API: `1`
 
 ## Repository boundary
@@ -68,6 +68,8 @@ The Skill optimizes for a review-first administrative flow:
     delivery and recurring send events.
 11. Delivery status must reflect only facts represented by persisted delivery
     state; scheduler slots are never mislabeled as actual send timestamps.
+12. Schedule previews must distinguish calculated occurrence previews from
+    authoritative persisted Scheduler state.
 
 `recurring-posts.describe.v1` is read-only and returns small JSON-like UX hints:
 limits, field labels/help, schedule payload fields, weekday choices and the
@@ -180,3 +182,24 @@ Discord delivery.
 ## Security/privacy impact
 
 Edit/test-send adds no capability and no new persisted data class. Channel validation still goes through the public Discord port, audit writes remain administrative metadata only, and cross-guild access is not introduced.
+
+
+## Schedule occurrence preview
+
+`recurring-posts.validate.v1` derives a next-occurrence preview using the public
+schedule contract's `next_run_at(...)` helper after the draft is normalized.
+
+This preview is useful during create/edit review, but it is intentionally marked:
+
+- `basis: calculated-from-now`
+- `authoritative: false`
+
+For interval schedules, that means "one interval from validation time", not the
+actual persisted job's next execution. For daily/weekly schedules it represents
+the next occurrence from the same reference time, still without claiming access
+to scheduler persistence.
+
+The public scoped Scheduler API currently has no read-only job lookup. Therefore
+this Skill must not fabricate an authoritative "Next run" for existing jobs.
+That missing capability belongs to the Runtime/SDK owner and is handled by
+handoff.

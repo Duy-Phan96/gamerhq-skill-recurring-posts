@@ -4,6 +4,14 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+## 1.3.2
+
+- Added `preview.nextOccurrence` to validation responses.
+- Next-occurrence preview is calculated from the normalized schedule at validation time.
+- Explicitly marks the preview `authoritative: false` with basis `calculated-from-now`.
+- Avoids claiming access to persisted Scheduler next-run state when the public scoped Scheduler API does not expose job reads.
+- No storage migration, scheduler mutation change, capability change or new Management API.
+
 ## 1.3.1
 
 - Added derived `deliveryStatus` metadata to list/get management views.

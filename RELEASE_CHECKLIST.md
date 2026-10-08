@@ -43,6 +43,8 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] List items expose the correct Edit, Pause/Resume, Send test and Delete-preview actions without persisting derived UI metadata.
 - [ ] Delivery status derives only from existing delivery fields and is never persisted.
 - [ ] Scheduler slots are labeled as scheduled-for values, not exact external send timestamps.
+- [ ] Validation next-occurrence previews are explicitly non-authoritative and calculated from the validation reference time.
+- [ ] Existing jobs are never presented with an authoritative next-run value unless a future public Scheduler read contract supplies it.
 - [ ] Pending status preserves visibility of any prior confirmed message metadata.
 - [ ] Test-send leaves storage, Scheduler jobs, recurring delivery slots and recurring-send events unchanged.
 - [ ] Test-send failure does not record a successful test-send audit action.

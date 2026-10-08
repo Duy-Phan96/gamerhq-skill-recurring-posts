@@ -31,6 +31,7 @@ from skill_runtime.contracts.schedule import (
     DailySchedule,
     IntervalSchedule,
     WeeklySchedule,
+    next_run_at,
     schedule_from_dict,
     schedule_to_dict,
 )
@@ -222,6 +223,25 @@ def _validate_post(post: RecurringPost) -> None:
 
 
 _WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+
+def _next_occurrence_preview(
+    schedule: Mapping[str, Any],
+    *,
+    after: int,
+) -> dict[str, Any]:
+    spec = schedule_from_dict(schedule)
+    scheduled_for = next_run_at(spec, after=after)
+    return {
+        "scheduledFor": scheduled_for,
+        "basis": "calculated-from-now",
+        "authoritative": False,
+        "label": "Next occurrence preview",
+        "help": (
+            "Preview only. Existing persisted Scheduler jobs may have a different "
+            "next run because the public Skill scheduler port does not expose job reads."
+        ),
+    }
 
 
 def _schedule_summary(schedule: Mapping[str, Any]) -> str:
@@ -420,6 +440,16 @@ def _ux_contract() -> dict[str, Any]:
             },
         },
         "recommendedFlow": ["review", "validate", "confirm"],
+        "schedulePreview": {
+            "label": "Next occurrence preview",
+            "responsePath": "preview.nextOccurrence",
+            "authoritative": False,
+            "basis": "calculated-from-now",
+            "help": (
+                "Calculated from the draft schedule at validation time. This is not "
+                "the persisted next run of an existing Scheduler job."
+            ),
+        },
         "actions": {
             "testSend": {
                 "label": "Send test",
@@ -450,7 +480,7 @@ class RecurringPostsSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Recurring Posts",
-        version="1.3.1",
+        version="1.3.2",
         runtime_api_version="1",
         description="Post configured messages automatically on interval, daily or weekly schedules.",
         author="GamerHQ",
@@ -556,6 +586,7 @@ class RecurringPostsSkill:
 
         await ctx.discord.get_channel(channel_id=channel_id)
         normalized = _validated_schedule(schedule)
+        preview_time = int(time.time())
         preview = RecurringPost(
             id=post_id or "preview",
             name=name.strip(),
@@ -571,6 +602,10 @@ class RecurringPostsSkill:
         view.pop("pendingSlot", None)
         view.pop("lastSentSlot", None)
         view.pop("lastMessageId", None)
+        view["nextOccurrence"] = _next_occurrence_preview(
+            normalized,
+            after=preview_time,
+        )
         return {"valid": True, "preview": view}
 
     async def _manage_test_send(self, ctx, payload) -> Mapping[str, Any]:

@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.3.1`  
+Version: `1.3.2`  
 Runtime API: `1`
 
 ## Purpose
@@ -224,3 +224,22 @@ States:
 The response exposes `pendingScheduledFor`, `lastConfirmedScheduledFor` and
 `lastMessageId`. The field name says **scheduled for** deliberately: the existing
 `lastSentSlot` is the scheduler slot, not a trustworthy wall-clock send time.
+
+
+## Next occurrence preview
+
+Version 1.3.2 adds a non-authoritative next-occurrence preview to
+`recurring-posts.validate.v1`.
+
+The preview is derived from the validated schedule at validation time and is
+returned as `preview.nextOccurrence` with:
+
+- `scheduledFor` — the calculated next epoch;
+- `basis = calculated-from-now`;
+- `authoritative = false`;
+- a user-facing label/help string.
+
+This is intentionally **not** presented as the persisted next run of an existing
+Scheduler job. The current public scoped Scheduler contract exposes job mutation
+(`upsert_job` / `remove_job`) but no read-only job lookup. A consumer must not
+treat this preview as authoritative scheduler state.
