@@ -4,6 +4,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Added a CI release-wheel build gate that verifies the package can be built as an installable wheel and that the artifact name matches the declared package version.
 - Added focused GitHub feature/bug Issue forms and a Pull Request template that capture scope, acceptance criteria, public-contract, persistence/scheduler, security, test, dependency and release impact.
 - Refreshed PROJECT_STATUS after the release-metadata gate: the latest verified CI now runs 47 tests per supported Python version and the SDK 0.2 dependency remains development-line only.
 - Added release-metadata regression tests that keep package, manifest, README and CHANGELOG version information synchronized.
