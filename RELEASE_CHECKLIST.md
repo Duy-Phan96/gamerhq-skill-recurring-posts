@@ -35,6 +35,8 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 
 - [ ] Static source audit passes.
 - [ ] Package metadata/manifest consistency passes.
+- [ ] README version and current CHANGELOG release section match the package/manifest version.
+- [ ] `Unreleased` remains the first CHANGELOG section.
 - [ ] Offline unit tests pass.
 - [ ] Describe/validate UX APIs are read-only and produce no storage, Scheduler or audit side effects.
 - [ ] UX metadata still exposes the 15-minute interval minimum and exact schedule payload fields.
