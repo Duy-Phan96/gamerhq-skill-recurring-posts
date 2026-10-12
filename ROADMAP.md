@@ -87,19 +87,18 @@ Remaining gap:
 
 ## Milestone 5 — Authoritative Scheduler Status
 
-**Status:** Planned / dependency pending
+**Status:** In Progress — 1.4.0 implementation
 
 **Goal:** Use the public scoped Scheduler read contract to expose authoritative
 runtime scheduling state without Host-private access.
 
 Dependency:
 
-- GamerHQ Skill SDK 0.2.x must be available as a reviewed, consumable dependency
-  for this repository.
-- Current Skill package metadata remains on `sdk >=0.1,<0.2`; do not raise the
-  range until the dependency is intentionally adopted.
+- GamerHQ Skill SDK 0.2.0 is now available on the reviewed `main` line.
+- Recurring Posts 1.4.0 adopts `sdk >=0.2,<0.3` and pins the reviewed upstream
+  main commit in CI.
 
-Proposed scope for the next feature release:
+1.4.0 scope:
 
 - read `ctx.scheduler.get_job(key=f"post:{post_id}")`;
 - expose authoritative `next_run_at` for active jobs;
@@ -143,15 +142,16 @@ Remaining priorities:
 
 ## Priority backlog
 
-### P1 — Adopt reviewed SDK 0.2.x
+### P1 — Finish Recurring Posts 1.4.0
 
-Only after the public Scheduler read contract is available as an intended
-consumer dependency.
+The reviewed SDK 0.2.x dependency is now available and adopted in the 1.4.0
+release candidate.
 
 Acceptance:
 
-- package metadata and CI use the intended reviewed SDK release/commit;
+- package metadata and CI use the reviewed SDK 0.2.0 main commit;
 - Runtime API compatibility remains explicit;
+- authoritative scheduler status is covered by tests;
 - Python 3.12/3.14 CI is green.
 
 ### P1 — Implement authoritative Scheduler status
