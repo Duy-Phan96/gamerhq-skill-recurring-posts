@@ -1,0 +1,69 @@
+name: Feature
+description: Propose a focused Recurring Posts improvement
+title: "[Feature] "
+labels: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / user value
+      description: What concrete problem should this solve, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the observable result, not implementation details.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed scope
+      description: What belongs in this repository for this task?
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What should explicitly remain out of scope?
+  - type: dropdown
+    id: public_contract
+    attributes:
+      label: Public contract impact
+      options:
+        - None / unknown
+        - Additive Management API or metadata
+        - Runtime / SDK dependency change
+        - Breaking public contract
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility / storage / scheduler impact
+      description: Note any impact on posts.v1, recurring-post.execute.v1, post:<post-id>, events, migrations or capabilities.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List verifiable conditions that define completion.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: dependency
+    attributes:
+      label: External dependency / handoff
+      description: If another repository or public contract is required, identify it here. Do not propose private cross-repo edits.
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test expectations
+      description: Which offline regression / contract tests should prove the change?
