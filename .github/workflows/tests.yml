@@ -35,5 +35,22 @@ jobs:
           python -m pip install pytest==9.1.1
       - name: Check dependencies
         run: python -m pip check
+      - name: Build release wheel
+        run: |
+          rm -rf dist
+          python -m pip wheel --no-deps . --wheel-dir dist
+          python - <<'PY'
+          import pathlib
+          import tomllib
+
+          project = tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+          expected = project["name"].replace("-", "_") + "-" + project["version"]
+          wheels = list(pathlib.Path("dist").glob("*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit(f"expected exactly one wheel, found {len(wheels)}")
+          if not wheels[0].name.startswith(expected):
+              raise SystemExit(f"unexpected wheel name: {wheels[0].name}")
+          print(wheels[0].name)
+          PY
       - name: Run offline tests
         run: python -m pytest
