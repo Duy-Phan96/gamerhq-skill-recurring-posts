@@ -4,7 +4,7 @@
 
 - Skill ID: `recurring-posts`
 - Package: `gamerhq-skill-recurring-posts`
-- Version: `1.3.2`
+- Version: `1.4.0`
 - Runtime API: `1`
 
 ## Repository boundary
@@ -199,8 +199,25 @@ actual persisted job's next execution. For daily/weekly schedules it represents
 the next occurrence from the same reference time, still without claiming access
 to scheduler persistence.
 
-The SDK range currently supported by this Skill (`>=0.1,<0.2`) has no
-read-only Scheduler job lookup. SDK 0.2.0 now provides a public scoped read
-contract upstream, but Recurring Posts has not yet adopted that dependency.
-Until the planned 1.4.0 work in Issue #14, this Skill must not fabricate an
-authoritative "Next run" for existing jobs.
+The Skill now requires SDK `>=0.2,<0.3` and uses the public scoped Scheduler
+read contract to obtain authoritative persisted job state for management views.
+The draft next-occurrence preview remains separate and non-authoritative.
+
+
+## Authoritative Scheduler status
+
+Version 1.4.0 enriches persisted-post Management responses with derived,
+non-persisted `schedulerStatus` data from `ctx.scheduler.get_job(...)`.
+
+States:
+
+- `scheduled`: active configuration and scheduler job both exist;
+- `paused`: paused configuration and no scheduler job exists;
+- `missing`: active configuration exists but the scheduler job is absent;
+- `unexpected-job`: paused configuration still has a scheduler job.
+
+Safe scheduler metadata may include the job key, next run, last run, failure
+count and revision. Payload, lease and claim-token state are not exposed.
+
+This does not change `posts.v1`, `recurring-post.execute.v1`,
+`post:<post-id>`, the recurring event, or the existing capability set.
