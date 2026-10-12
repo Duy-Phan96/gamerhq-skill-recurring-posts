@@ -40,6 +40,7 @@ class FakeScheduler:
         self.upserts = []
         self.fail_upsert = False
         self.fail_remove = False
+        self.status_overrides = {}
 
     async def upsert_job(self, *, key, handler_id, schedule, payload):
         if self.fail_upsert:
@@ -56,6 +57,21 @@ class FakeScheduler:
             raise RuntimeError("synthetic scheduler remove failure")
         self.removed.append(key)
         self.jobs.pop(key, None)
+
+    async def get_job(self, *, key):
+        if key in self.status_overrides:
+            return self.status_overrides[key]
+        job = self.jobs.get(key)
+        if job is None:
+            return None
+        return SimpleNamespace(
+            key=key,
+            handler_id=job["handler_id"],
+            next_run_at=5000,
+            last_run_at=None,
+            failure_count=0,
+            revision=1,
+        )
 
 
 class FakeDiscord:
@@ -457,6 +473,73 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.scheduler.jobs, jobs_before)
         self.assertEqual(self.audit.calls, audit_before)
 
+    async def test_management_view_reports_authoritative_scheduled_job(self):
+        post = await self.create()
+        self.scheduler.status_overrides[f"post:{post.id}"] = SimpleNamespace(
+            key=f"post:{post.id}",
+            handler_id=HANDLER_ID,
+            next_run_at=7000,
+            last_run_at=6500,
+            failure_count=2,
+            revision=4,
+        )
+
+        item = (await self.skill._manage_get(self.ctx, {"postId": post.id}))["post"]
+
+        self.assertEqual(item["schedulerStatus"]["state"], "scheduled")
+        self.assertEqual(item["schedulerStatus"]["label"], "Scheduled")
+        self.assertTrue(item["schedulerStatus"]["authoritative"])
+        self.assertEqual(item["schedulerStatus"]["jobKey"], f"post:{post.id}")
+        self.assertEqual(item["schedulerStatus"]["nextRunAt"], 7000)
+        self.assertEqual(item["schedulerStatus"]["lastRunAt"], 6500)
+        self.assertEqual(item["schedulerStatus"]["failureCount"], 2)
+        self.assertEqual(item["schedulerStatus"]["revision"], 4)
+        self.assertEqual(item["managementSummary"]["scheduler"], "Scheduled")
+        self.assertEqual(item["managementSummary"]["nextRunAt"], 7000)
+        self.assertNotIn("schedulerStatus", self.storage.values["posts.v1"][post.id])
+
+    async def test_management_view_reports_paused_without_scheduler_job(self):
+        post = await self.create(active=False)
+
+        item = (await self.skill._manage_get(self.ctx, {"postId": post.id}))["post"]
+
+        self.assertEqual(item["schedulerStatus"]["state"], "paused")
+        self.assertEqual(item["schedulerStatus"]["label"], "Paused")
+        self.assertTrue(item["schedulerStatus"]["authoritative"])
+        self.assertIsNone(item["schedulerStatus"]["nextRunAt"])
+        self.assertIsNone(item["managementSummary"]["nextRunAt"])
+
+    async def test_management_view_reports_missing_job_for_active_post(self):
+        post = await self.create()
+        self.scheduler.jobs.pop(f"post:{post.id}")
+
+        item = (await self.skill._manage_get(self.ctx, {"postId": post.id}))["post"]
+
+        self.assertEqual(item["schedulerStatus"]["state"], "missing")
+        self.assertEqual(item["schedulerStatus"]["label"], "Scheduler job missing")
+        self.assertTrue(item["schedulerStatus"]["authoritative"])
+        self.assertIsNone(item["schedulerStatus"]["nextRunAt"])
+
+    async def test_management_view_flags_scheduler_job_present_while_paused(self):
+        post = await self.create(active=False)
+        self.scheduler.status_overrides[f"post:{post.id}"] = SimpleNamespace(
+            key=f"post:{post.id}",
+            handler_id=HANDLER_ID,
+            next_run_at=8000,
+            last_run_at=None,
+            failure_count=0,
+            revision=3,
+        )
+
+        item = (await self.skill._manage_get(self.ctx, {"postId": post.id}))["post"]
+
+        self.assertEqual(item["schedulerStatus"]["state"], "unexpected-job")
+        self.assertEqual(
+            item["schedulerStatus"]["label"],
+            "Scheduler job present while paused",
+        )
+        self.assertEqual(item["schedulerStatus"]["nextRunAt"], 8000)
+
     async def test_management_view_reports_never_sent_without_guessing_timestamp(self):
         post = await self.create(active=False)
 
@@ -508,6 +591,14 @@ class RecurringPostsSkillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(item["deliveryStatus"]["lastConfirmedScheduledFor"], 111)
         self.assertEqual(item["deliveryStatus"]["lastMessageId"], 9001)
         self.assertTrue(item["deliveryStatus"]["hasConfirmedDelivery"])
+
+    async def test_list_presentation_declares_scheduler_summary_field(self):
+        result = await self.skill._manage_describe(self.ctx, {})
+
+        self.assertIn(
+            "managementSummary.scheduler",
+            result["listPresentation"]["secondaryFields"],
+        )
 
     async def test_list_presentation_declares_delivery_summary_field(self):
         result = await self.skill._manage_describe(self.ctx, {})
