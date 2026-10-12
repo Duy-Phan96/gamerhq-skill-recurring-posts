@@ -238,8 +238,8 @@ def _next_occurrence_preview(
         "authoritative": False,
         "label": "Next occurrence preview",
         "help": (
-            "Preview only. Existing persisted Scheduler jobs may have a different "
-            "next run because the public Skill scheduler port does not expose job reads."
+            "Preview only. This is calculated from the draft schedule at validation "
+            "time and is separate from authoritative persisted Scheduler job state."
         ),
     }
 
