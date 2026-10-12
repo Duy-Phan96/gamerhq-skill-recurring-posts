@@ -7,7 +7,7 @@ _Last reviewed: 2026-10-12_
 Recurring Posts is a standalone, portable GamerHQ Skill for persistent scheduled
 Discord messages.
 
-**Current package version:** `1.3.2`  
+**Current source/package version:** `1.4.0`  
 **Runtime API:** `1`  
 **Skill ID:** `recurring-posts`  
 **Storage key:** `posts.v1`  
@@ -15,8 +15,8 @@ Discord messages.
 **Scheduler job key:** `post:<post-id>`  
 **Event:** `recurring-post.sent.v1`
 
-**Maturity:** Beta / release-ready library, pending stronger formal release
-publishing and the next reviewed SDK dependency update.
+**Maturity:** Beta / release-ready library. SDK 0.2.0 is now adopted; formal
+GitHub release/tag publication remains a repository-owner action.
 
 ## Verified implementation
 
@@ -48,7 +48,8 @@ UX metadata:
 - compact management summaries;
 - quick actions;
 - delivery status;
-- non-authoritative next-occurrence preview.
+- non-authoritative next-occurrence preview;
+- authoritative persisted Scheduler status in management responses.
 
 Reliability:
 
@@ -96,22 +97,14 @@ No code-coverage percentage is currently claimed.
 
 ## Current limitations
 
-### Authoritative next run
+### Authoritative Scheduler status
 
-Version 1.3.2 can calculate a draft next-occurrence preview, but intentionally
-marks it non-authoritative.
+The SDK 0.2.0 dependency is now available on the reviewed GamerHQ `main` line
+and Recurring Posts 1.4.0 adopts it through the public scoped Scheduler read
+contract.
 
-The required public Scheduler read contract has since been implemented upstream
-in GamerHQ Skill SDK 0.2.0 on the GamerHQ development line. As of the latest
-2026-10-12 verification, GamerHQ `main` still publishes SDK 0.1.0 while
-`develop` carries 0.2.0. This repository has
-not yet intentionally adopted SDK 0.2.x and still declares:
-
-`sdk >=0.1,<0.2`
-
-Therefore authoritative Scheduler state is not yet part of the current Skill
-release. Issue #14 tracks the planned 1.4.0 adoption once 0.2.x is an intended
-consumer dependency.
+Management responses can now distinguish scheduled, paused, missing-job and
+unexpected-job states without Host/database access or new persisted Skill data.
 
 ### Generic Test Send action rendering
 
@@ -146,11 +139,11 @@ Repository-governance improvements completed after the audit:
 
 ## Current priorities
 
-1. keep 1.3.2 stable;
-2. adopt reviewed SDK 0.2.x when intentionally consumable;
-3. implement authoritative Scheduler status as the next focused feature;
-4. publish the next formal GitHub release with clear compatibility notes;
-5. maintain repository hygiene and documentation consistency.
+1. finish review/CI for 1.4.0 and publish the formal GitHub release/tag;
+2. keep the SDK 0.2.x compatibility statement current;
+3. complete Issue #17 release/branch hygiene;
+4. maintain repository hygiene and documentation consistency;
+5. defer new feature expansion until there is demonstrated user demand.
 
 ## Not current scope
 
