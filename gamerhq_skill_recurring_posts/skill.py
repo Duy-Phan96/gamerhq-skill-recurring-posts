@@ -350,6 +350,55 @@ def _post_management_view(post: RecurringPost) -> dict[str, Any]:
     }
 
 
+async def _scheduler_status(ctx, post: RecurringPost) -> dict[str, Any]:
+    job_key = f"post:{post.id}"
+    job = await ctx.scheduler.get_job(key=job_key)
+    if job is None:
+        if post.active:
+            return {
+                "state": "missing",
+                "label": "Scheduler job missing",
+                "authoritative": True,
+                "jobKey": job_key,
+                "nextRunAt": None,
+                "lastRunAt": None,
+                "failureCount": 0,
+                "revision": None,
+            }
+        return {
+            "state": "paused",
+            "label": "Paused",
+            "authoritative": True,
+            "jobKey": job_key,
+            "nextRunAt": None,
+            "lastRunAt": None,
+            "failureCount": 0,
+            "revision": None,
+        }
+
+    state = "scheduled" if post.active else "unexpected-job"
+    label = "Scheduled" if post.active else "Scheduler job present while paused"
+    return {
+        "state": state,
+        "label": label,
+        "authoritative": True,
+        "jobKey": job.key,
+        "nextRunAt": int(job.next_run_at),
+        "lastRunAt": int(job.last_run_at) if job.last_run_at is not None else None,
+        "failureCount": int(job.failure_count),
+        "revision": int(job.revision),
+    }
+
+
+async def _post_management_view_with_scheduler(ctx, post: RecurringPost) -> dict[str, Any]:
+    view = _post_management_view(post)
+    scheduler = await _scheduler_status(ctx, post)
+    view["schedulerStatus"] = scheduler
+    view["managementSummary"]["scheduler"] = scheduler["label"]
+    view["managementSummary"]["nextRunAt"] = scheduler["nextRunAt"]
+    return view
+
+
 def _ux_contract() -> dict[str, Any]:
     return {
         "limits": {
@@ -470,6 +519,7 @@ def _ux_contract() -> dict[str, Any]:
                 "managementSummary.channelId",
                 "managementSummary.schedule",
                 "managementSummary.delivery",
+                "managementSummary.scheduler",
             ],
             "actionsField": "quickActions",
         },
@@ -480,7 +530,7 @@ class RecurringPostsSkill:
     manifest = SkillManifest(
         id=SKILL_ID,
         name="Recurring Posts",
-        version="1.3.2",
+        version="1.4.0",
         runtime_api_version="1",
         description="Post configured messages automatically on interval, daily or weekly schedules.",
         author="GamerHQ",
@@ -551,14 +601,19 @@ class RecurringPostsSkill:
 
     async def _manage_list(self, ctx, payload) -> Mapping[str, Any]:
         posts = await self.list_posts(ctx)
-        return {"posts": [_post_management_view(post) for post in posts]}
+        return {
+            "posts": [
+                await _post_management_view_with_scheduler(ctx, post)
+                for post in posts
+            ]
+        }
 
     async def _manage_get(self, ctx, payload) -> Mapping[str, Any]:
         post_id = str(payload.get("postId", "")).strip()
         if not post_id:
             raise ValueError("postId is required.")
         post = await self.get_post(ctx, post_id)
-        return {"post": _post_management_view(post)}
+        return {"post": await _post_management_view_with_scheduler(ctx, post)}
 
     async def _manage_describe(self, ctx, payload) -> Mapping[str, Any]:
         return _ux_contract()
@@ -678,7 +733,7 @@ class RecurringPostsSkill:
             schedule=schedule,
             active=active,
         )
-        return {"post": _post_management_view(post)}
+        return {"post": await _post_management_view_with_scheduler(ctx, post)}
 
     async def _manage_update(self, ctx, payload) -> Mapping[str, Any]:
         try:
@@ -705,7 +760,7 @@ class RecurringPostsSkill:
             schedule=schedule,
             active=active,
         )
-        return {"post": _post_management_view(post)}
+        return {"post": await _post_management_view_with_scheduler(ctx, post)}
 
     async def _manage_set_active(self, ctx, payload) -> Mapping[str, Any]:
         post_id = str(payload.get("postId", "")).strip()
@@ -713,7 +768,7 @@ class RecurringPostsSkill:
         if not post_id or not isinstance(active, bool):
             raise ValueError("postId and boolean active are required.")
         post = await self.set_active(ctx, post_id=post_id, active=active)
-        return {"post": _post_management_view(post)}
+        return {"post": await _post_management_view_with_scheduler(ctx, post)}
 
     async def _manage_delete_preview(self, ctx, payload) -> Mapping[str, Any]:
         post_id = str(payload.get("postId", "")).strip()
@@ -721,7 +776,7 @@ class RecurringPostsSkill:
             raise ValueError("postId is required.")
         post = await self.get_post(ctx, post_id)
         return {
-            "post": _post_management_view(post),
+            "post": await _post_management_view_with_scheduler(ctx, post),
             "warning": (
                 "Deleting this recurring post removes its configuration and scheduler job. "
                 "This action cannot be undone by the Skill."
