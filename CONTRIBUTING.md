@@ -183,6 +183,8 @@ product requirement.
 
 ## Security
 
+See `SECURITY.md` for vulnerability reporting and the repository's security boundaries.
+
 Never commit:
 
 - tokens;
