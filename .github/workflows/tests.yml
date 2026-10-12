@@ -52,5 +52,31 @@ jobs:
               raise SystemExit(f"unexpected wheel name: {wheels[0].name}")
           print(wheels[0].name)
           PY
+      - name: Smoke test built wheel
+        run: |
+          python -m pip install --force-reinstall --no-deps dist/*.whl
+          python - <<'PY'
+          from importlib.metadata import entry_points, version
+
+          import gamerhq_skill_recurring_posts
+
+          installed = version("gamerhq-skill-recurring-posts")
+          eps = [
+              ep
+              for ep in entry_points(group="gamerhq.skills")
+              if ep.name == "recurring-posts"
+          ]
+          if len(eps) != 1:
+              raise SystemExit(f"expected one recurring-posts entry point, found {len(eps)}")
+          factory = eps[0].load()
+          skill = factory()
+          if skill.manifest.id != "recurring-posts":
+              raise SystemExit(f"unexpected Skill ID: {skill.manifest.id}")
+          if skill.manifest.version != installed:
+              raise SystemExit(
+                  f"manifest/package version mismatch: {skill.manifest.version} != {installed}"
+              )
+          print(f"{skill.manifest.id} {installed}")
+          PY
       - name: Run offline tests
         run: python -m pytest
