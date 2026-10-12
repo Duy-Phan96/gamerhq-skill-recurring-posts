@@ -87,7 +87,7 @@ Remaining gap:
 
 ## Milestone 5 — Authoritative Scheduler Status
 
-**Status:** In Progress — 1.4.0 implementation
+**Status:** Completed in 1.4.0 source — publication pending
 
 **Goal:** Use the public scoped Scheduler read contract to expose authoritative
 runtime scheduling state without Host-private access.
@@ -142,27 +142,18 @@ Remaining priorities:
 
 ## Priority backlog
 
-### P1 — Finish Recurring Posts 1.4.0
+### P1 — Publish Recurring Posts 1.4.0
 
-The reviewed SDK 0.2.x dependency is now available and adopted in the 1.4.0
-release candidate.
+The reviewed SDK 0.2.x dependency and authoritative Scheduler status are
+implemented in the 1.4.0 source line.
 
-Acceptance:
+Acceptance before publication:
 
-- package metadata and CI use the reviewed SDK 0.2.0 main commit;
-- Runtime API compatibility remains explicit;
-- authoritative scheduler status is covered by tests;
-- Python 3.12/3.14 CI is green.
-
-### P1 — Implement authoritative Scheduler status
-
-Acceptance:
-
-- active post can report the persisted scheduler next run;
-- paused/no-job state is explicit;
-- no Host/database imports;
-- no storage migration;
-- existing Management API consumers remain compatible.
+- exact immutable merge commit recorded;
+- Python 3.12/3.14 CI is green;
+- 52 offline/contract/release-metadata tests pass per supported Python version;
+- release wheel build/install and entry-point smoke checks pass;
+- compatibility/dependency statement is current.
 
 ### P1 — Create the next formal Skill release
 
