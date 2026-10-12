@@ -104,9 +104,11 @@ tests before release.
 
 Before changing behavior, review:
 
+- `PROJECT_STATUS.md` — current verified project snapshot and active constraints;
+- `ROADMAP.md` — milestones, priorities, deferred scope and next release direction;
 - `SKILL_DESIGN.md` — architecture and contract inventory;
 - `AGENTS.md` — repository rules for developers and coding agents;
-- `RELEASE_CHECKLIST.md` — release and deployment readiness.
+- `RELEASE_CHECKLIST.md` — release readiness and consumer acceptance guidance.
 
 The package must remain independently testable without a Discord token or
 production database.
