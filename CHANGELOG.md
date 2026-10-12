@@ -4,6 +4,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Refreshed project/status/design documentation after the audit follow-ups so SDK 0.2.0 is described as upstream-but-not-yet-adopted rather than missing, and completed GitHub governance work is no longer listed as outstanding.
 - Added `SECURITY.md` covering vulnerability reporting, capability/guild boundaries, secrets/private data, scheduler and Management API safety.
 - Added `RELEASES.md` with semantic versioning, immutable release commit, tag/GitHub Release, dependency, rollback and post-release guidance.
 - Added `CONTRIBUTING.md` with repository boundaries, branch/PR workflow, test expectations, SDK dependency policy and release discipline.
