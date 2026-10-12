@@ -119,19 +119,27 @@ Non-goals:
 
 ## Milestone 6 — Release & Repository Professionalization
 
-**Status:** Planned
+**Status:** In Progress
 
 **Goal:** Make the repository as clear to external developers and reviewers as
 the implementation already is.
 
-Priorities:
+Completed:
+
+- added `PROJECT_STATUS.md` and this roadmap;
+- added `CONTRIBUTING.md`;
+- added `RELEASES.md`;
+- added `SECURITY.md`;
+- closed completed Issue #1;
+- created Issue #14 for the next feature milestone;
+- created Issue #17 for formal release/branch hygiene.
+
+Remaining priorities:
 
 1. publish reviewed GitHub releases/tags for stable Skill versions;
-2. keep this roadmap and `PROJECT_STATUS.md` current;
-3. close completed/stale Issues;
-4. remove merged feature branches where practical;
-5. document the long-term SDK dependency/release policy;
-6. keep changelog entries unambiguous and release-scoped.
+2. remove merged feature branches where practical;
+3. keep this roadmap and `PROJECT_STATUS.md` current;
+4. keep changelog entries unambiguous and release-scoped.
 
 ## Priority backlog
 
