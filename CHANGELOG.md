@@ -4,6 +4,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Refreshed PROJECT_STATUS after the release-metadata gate: the latest verified CI now runs 47 tests per supported Python version and the SDK 0.2 dependency remains development-line only.
 - Added release-metadata regression tests that keep package, manifest, README and CHANGELOG version information synchronized.
 - Refreshed project/status/design documentation after the audit follow-ups so SDK 0.2.0 is described as upstream-but-not-yet-adopted rather than missing, and completed GitHub governance work is no longer listed as outstanding.
 - Added `SECURITY.md` covering vulnerability reporting, capability/guild boundaries, secrets/private data, scheduler and Management API safety.
@@ -27,12 +28,11 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 - Distinguishes `never-sent`, `pending` and `sent` using existing delivery state.
 - Added readable delivery text to compact management summaries.
 - Uses `lastConfirmedScheduledFor` rather than claiming `lastSentSlot` is an exact send timestamp.
-- No storage migration, scheduler change, event change or new capability.
-
 - Clarified autonomous repository ownership and independent release responsibilities.
 - Removed wording that implied this Skill repository controls GamerHQ Host integration or production deployment.
 - Standardized cross-repository work as read-only contract inspection plus explicit handoffs.
 - Added milestone reporting expectations for contracts, storage, capabilities, dependencies and handoffs.
+- No storage migration, scheduler change, event change or new capability.
 
 ## 1.3.0
 
