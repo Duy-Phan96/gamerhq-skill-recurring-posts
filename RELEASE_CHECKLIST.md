@@ -36,6 +36,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Static source audit passes.
 - [ ] Package metadata/manifest consistency passes.
 - [ ] Release wheel builds successfully and matches the package name/version.
+- [ ] Built wheel installs cleanly and exposes exactly one `gamerhq.skills` entry point named `recurring-posts`.
 - [ ] README version and current CHANGELOG release section match the package/manifest version.
 - [ ] `Unreleased` remains the first CHANGELOG section.
 - [ ] Offline unit tests pass.
