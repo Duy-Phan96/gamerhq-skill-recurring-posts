@@ -89,7 +89,7 @@ private implementation is allowed.
 The current `main` commit for 1.3.2 passed the repository CI on Python 3.12 and
 Python 3.14.
 
-Latest verified CI run collected **43 tests** and passed all 43 on both supported
+Latest verified CI run collected **47 tests** and passed all 47 on both supported
 Python versions.
 
 No code-coverage percentage is currently claimed.
@@ -102,7 +102,9 @@ Version 1.3.2 can calculate a draft next-occurrence preview, but intentionally
 marks it non-authoritative.
 
 The required public Scheduler read contract has since been implemented upstream
-in GamerHQ Skill SDK 0.2.0 on the GamerHQ development line. This repository has
+in GamerHQ Skill SDK 0.2.0 on the GamerHQ development line. As of the latest
+2026-10-12 verification, GamerHQ `main` still publishes SDK 0.1.0 while
+`develop` carries 0.2.0. This repository has
 not yet intentionally adopted SDK 0.2.x and still declares:
 
 `sdk >=0.1,<0.2`
