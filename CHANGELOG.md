@@ -4,6 +4,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Added an explicit README compatibility matrix for the current 1.3.x SDK range and the planned SDK 0.2.x-based 1.4.0 line.
 - Added a README quick start for local setup, offline testing, wheel building and consumer-installation boundaries.
 - Added package discovery metadata for repository, Issues, changelog and relevant package keywords.
 - Added a built-wheel smoke test that reinstalls the release artifact and verifies package version, the `gamerhq.skills` entry point, factory loading and Skill manifest identity/version.
