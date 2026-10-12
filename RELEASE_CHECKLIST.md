@@ -9,6 +9,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Distribution remains `gamerhq-skill-recurring-posts`.
 - [ ] Package project URLs and discovery metadata point to this repository's public resources.
 - [ ] Runtime API compatibility is reviewed.
+- [ ] README compatibility matrix matches the package SDK range and planned dependency state.
 - [ ] Skill version follows semantic versioning.
 
 ## Permissions

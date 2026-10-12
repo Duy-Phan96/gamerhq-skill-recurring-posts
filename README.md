@@ -71,6 +71,22 @@ This repository does not configure or deploy the consuming GamerHQ Host. See
 `RELEASES.md` for this Skill's release process and `PROJECT_STATUS.md` for
 the currently supported dependency state.
 
+## Compatibility
+
+| Skill line | Runtime API | Supported SDK | Status |
+| --- | --- | --- | --- |
+| 1.3.x | 1 | `>=0.1,<0.2` | Current |
+| 1.4.0 (planned) | 1 | reviewed SDK 0.2.x | Blocked until intentionally consumable |
+
+The current Skill does not require SDK 0.2.x. Version 1.3.2 deliberately keeps
+its next-occurrence preview non-authoritative because the supported SDK range
+does not expose persisted Scheduler job reads.
+
+SDK 0.2.0 already contains the required public read contract upstream, but it is
+still on the GamerHQ development line rather than the currently consumable
+`main` SDK line. Issue #14 tracks adoption once that dependency is formally
+available.
+
 ## Capabilities
 
 - `discord.channels.read`
