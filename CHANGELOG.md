@@ -4,6 +4,16 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+## 1.4.0
+
+- Adopted reviewed GamerHQ Skill SDK 0.2.0 with supported range `>=0.2,<0.3`.
+- Added authoritative, non-persisted `schedulerStatus` metadata to recurring-post Management responses.
+- Exposes safe scheduler job key, next run, last run, failure count and revision without payload/lease/claim-token data.
+- Distinguishes `scheduled`, `paused`, `missing` and `unexpected-job` scheduler states.
+- Keeps draft `preview.nextOccurrence` separate and explicitly non-authoritative.
+- Preserves `posts.v1`, `recurring-post.execute.v1`, `post:<post-id>`, the recurring event and existing capabilities.
+- No storage migration.
+
 - Added an explicit README compatibility matrix for the current 1.3.x SDK range and the planned SDK 0.2.x-based 1.4.0 line.
 - Added a README quick start for local setup, offline testing, wheel building and consumer-installation boundaries.
 - Added package discovery metadata for repository, Issues, changelog and relevant package keywords.

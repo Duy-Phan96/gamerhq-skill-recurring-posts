@@ -50,7 +50,9 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Delivery status derives only from existing delivery fields and is never persisted.
 - [ ] Scheduler slots are labeled as scheduled-for values, not exact external send timestamps.
 - [ ] Validation next-occurrence previews are explicitly non-authoritative and calculated from the validation reference time.
-- [ ] Existing jobs are never presented with an authoritative next-run value unless a future public Scheduler read contract supplies it.
+- [ ] Existing jobs use the public scoped Scheduler read contract for authoritative next-run state.
+- [ ] Draft `preview.nextOccurrence` remains explicitly non-authoritative and separate from persisted Scheduler state.
+- [ ] Active posts with missing jobs and paused posts with unexpected jobs are surfaced as explicit management states.
 - [ ] Pending status preserves visibility of any prior confirmed message metadata.
 - [ ] Test-send leaves storage, Scheduler jobs, recurring delivery slots and recurring-send events unchanged.
 - [ ] Test-send failure does not record a successful test-send audit action.
@@ -61,6 +63,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 ## Independent Skill release
 
 - [ ] SDK dependency is pinned to a reviewed compatible release/commit.
+- [ ] Supported SDK range matches the README compatibility matrix and CI pin.
 - [ ] Package source/release is immutable and reviewable.
 - [ ] Changelog/release notes describe user-visible changes.
 - [ ] Release status is reported for this repository only.

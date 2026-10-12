@@ -3,7 +3,7 @@
 Reference external Skill package for the GamerHQ Skill Runtime.
 
 Skill ID: `recurring-posts`  
-Version: `1.3.2`  
+Version: `1.4.0`  
 Runtime API: `1`
 
 ## Purpose
@@ -20,7 +20,7 @@ requires a compatible GamerHQ Skill Runtime/SDK host.
 
 - Python 3.12 or 3.14;
 - a compatible GamerHQ Skill SDK in the currently supported range
-  `>=0.1,<0.2`;
+  `>=0.2,<0.3`;
 - no Discord token or production database is required for local tests.
 
 ### Local development
@@ -41,7 +41,7 @@ For the current repository state:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install "gamerhq-skill-sdk @ git+https://github.com/Duy-Phan96/GamerHQ.git@843d81e6584d2372a861d12223486bc594f16a3b"
+python -m pip install "gamerhq-skill-sdk @ git+https://github.com/Duy-Phan96/GamerHQ.git@a23821dc792a449a6d4afae453c1d7cc1723ec3f"
 python -m pip install --no-deps -e .
 python -m pip install pytest==9.1.1
 python -m pip check
@@ -75,17 +75,15 @@ the currently supported dependency state.
 
 | Skill line | Runtime API | Supported SDK | Status |
 | --- | --- | --- | --- |
-| 1.3.x | 1 | `>=0.1,<0.2` | Current |
-| 1.4.0 (planned) | 1 | reviewed SDK 0.2.x | Blocked until intentionally consumable |
+| 1.3.x | 1 | `>=0.1,<0.2` | Previous compatible line |
+| 1.4.x | 1 | `>=0.2,<0.3` | Current source line |
 
-The current Skill does not require SDK 0.2.x. Version 1.3.2 deliberately keeps
-its next-occurrence preview non-authoritative because the supported SDK range
-does not expose persisted Scheduler job reads.
+Version 1.4.0 adopts the reviewed SDK 0.2.0 scheduler-read contract and can expose
+authoritative persisted Scheduler job status for configured posts.
 
-SDK 0.2.0 already contains the required public read contract upstream, but it is
-still on the GamerHQ development line rather than the currently consumable
-`main` SDK line. Issue #14 tracks adoption once that dependency is formally
-available.
+Draft validation still returns a separate non-authoritative
+`preview.nextOccurrence`; that value is calculated from the draft schedule and
+must not be confused with persisted scheduler state.
 
 ## Capabilities
 
@@ -309,7 +307,7 @@ The response exposes `pendingScheduledFor`, `lastConfirmedScheduledFor` and
 
 ## Next occurrence preview
 
-Version 1.3.2 adds a non-authoritative next-occurrence preview to
+Version 1.3.2 added a non-authoritative next-occurrence preview to
 `recurring-posts.validate.v1`.
 
 The preview is derived from the validated schedule at validation time and is
@@ -320,9 +318,32 @@ returned as `preview.nextOccurrence` with:
 - `authoritative = false`;
 - a user-facing label/help string.
 
-This is intentionally **not** presented as the persisted next run of an existing
-Scheduler job. The SDK range currently supported by this Skill (`>=0.1,<0.2`)
-does not expose the read-only Scheduler job lookup needed for authoritative
-persisted state. SDK 0.2.0 adds that public contract upstream, but this repository
-has not intentionally adopted 0.2.x yet. Consumers must therefore continue to
-treat this 1.3.2 preview as non-authoritative.
+This remains intentionally **separate** from the persisted next run of an
+existing Scheduler job. In 1.4.0, management responses can read authoritative
+scheduler state through SDK 0.2.x, while `preview.nextOccurrence` remains a
+draft-only calculated value.
+
+
+## Authoritative Scheduler status
+
+Version 1.4.0 adds non-persisted `schedulerStatus` metadata to recurring-post
+management views by using the public scoped Scheduler read contract.
+
+Possible states:
+
+- `scheduled` — an active post has a persisted scheduler job;
+- `paused` — a paused post has no scheduler job;
+- `missing` — an active post has no persisted scheduler job and needs attention;
+- `unexpected-job` — a paused post still has a scheduler job and needs attention.
+
+The response may include:
+
+- `jobKey`
+- `nextRunAt`
+- `lastRunAt`
+- `failureCount`
+- `revision`
+
+These fields are authoritative scheduler metadata and are never written into
+`posts.v1`. The existing draft `nextOccurrence` preview remains explicitly
+non-authoritative.
