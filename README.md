@@ -107,6 +107,7 @@ Before changing behavior, review:
 - `PROJECT_STATUS.md` — current verified project snapshot and active constraints;
 - `ROADMAP.md` — milestones, priorities, deferred scope and next release direction;
 - `CONTRIBUTING.md` — contributor workflow, testing, dependency and release rules;
+- `RELEASES.md` — repository-local versioning, tagging, GitHub Release and rollback process;
 - `SKILL_DESIGN.md` — architecture and contract inventory;
 - `AGENTS.md` — repository rules for developers and coding agents;
 - `RELEASE_CHECKLIST.md` — release readiness and consumer acceptance guidance.
