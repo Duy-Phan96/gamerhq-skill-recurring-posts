@@ -72,7 +72,7 @@ Delivered in 1.2.x:
 
 ## Milestone 4 — Operational UX & Delivery Visibility
 
-**Status:** Completed except for authoritative Scheduler state
+**Status:** Completed
 
 Delivered in 1.3.x:
 
@@ -81,9 +81,7 @@ Delivered in 1.3.x:
 - truthful confirmed-delivery metadata;
 - non-authoritative next-occurrence preview for draft validation.
 
-Remaining gap:
-
-- authoritative persisted Scheduler next-run state for an existing active post.
+The authoritative persisted Scheduler-state gap was completed in Milestone 5.
 
 ## Milestone 5 — Authoritative Scheduler Status
 
@@ -130,7 +128,7 @@ Completed:
 - added `RELEASES.md`;
 - added `SECURITY.md`;
 - closed completed Issue #1;
-- created Issue #14 for the next feature milestone;
+- completed Issue #14 with the 1.4.0 authoritative Scheduler-status implementation;
 - created Issue #17 for formal release/branch hygiene.
 
 Remaining priorities:
@@ -167,7 +165,6 @@ Acceptance:
 
 ### P2 — Repository hygiene
 
-- close completed Issue #1;
 - prune merged branches where supported;
 - keep status/roadmap synchronized with releases.
 
