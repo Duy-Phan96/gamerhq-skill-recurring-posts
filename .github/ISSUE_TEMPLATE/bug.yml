@@ -1,0 +1,67 @@
+name: Bug
+description: Report a reproducible Recurring Posts defect
+title: "[Bug] "
+labels: []
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide minimal steps using synthetic/non-sensitive data.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Skill version or commit
+      placeholder: "e.g. 1.3.2 or immutable SHA"
+  - type: input
+    id: sdk
+    attributes:
+      label: Runtime / SDK version
+      placeholder: "e.g. Runtime API 1 / SDK 0.1.x"
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact area
+      options:
+        - Management UX / validation
+        - Scheduler / recurring delivery
+        - Storage / persistence
+        - Discord delivery
+        - Events / audit
+        - Compatibility / packaging
+        - Security / privacy
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Persistence / compatibility risk
+      description: Could posts.v1, scheduler identity, delivery state or existing configurations be affected?
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Fix acceptance criteria
+      placeholder: |
+        - [ ] Regression test added
+        - [ ] Existing identities remain compatible
+        - [ ] Python 3.12 / 3.14 CI pass
+    validations:
+      required: true
