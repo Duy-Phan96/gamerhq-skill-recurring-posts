@@ -90,8 +90,9 @@ private implementation is allowed.
 The current `main` commit for 1.3.2 passed the repository CI on Python 3.12 and
 Python 3.14.
 
-Latest verified CI run collected **47 tests** and passed all 47 on both supported
-Python versions.
+Latest verified 1.4.0 candidate CI run collected **52 tests** and passed all 52
+on both supported Python versions, including release-wheel build/install and
+entry-point smoke validation.
 
 No code-coverage percentage is currently claimed.
 
@@ -139,7 +140,7 @@ Repository-governance improvements completed after the audit:
 
 ## Current priorities
 
-1. finish review/CI for 1.4.0 and publish the formal GitHub release/tag;
+1. publish the formal 1.4.0 GitHub release/tag from the reviewed immutable commit;
 2. keep the SDK 0.2.x compatibility statement current;
 3. complete Issue #17 release/branch hygiene;
 4. maintain repository hygiene and documentation consistency;
