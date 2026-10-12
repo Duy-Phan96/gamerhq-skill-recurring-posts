@@ -4,6 +4,8 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Added a README quick start for local setup, offline testing, wheel building and consumer-installation boundaries.
+- Added package discovery metadata for repository, Issues, changelog and relevant package keywords.
 - Added a built-wheel smoke test that reinstalls the release artifact and verifies package version, the `gamerhq.skills` entry point, factory loading and Skill manifest identity/version.
 - Added a CI release-wheel build gate that verifies the package can be built as an installable wheel and that the artifact name matches the declared package version.
 - Added focused GitHub feature/bug Issue forms and a Pull Request template that capture scope, acceptance criteria, public-contract, persistence/scheduler, security, test, dependency and release impact.

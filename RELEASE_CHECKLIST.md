@@ -7,6 +7,7 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] Skill ID remains `recurring-posts`.
 - [ ] Entry-point name remains `recurring-posts`.
 - [ ] Distribution remains `gamerhq-skill-recurring-posts`.
+- [ ] Package project URLs and discovery metadata point to this repository's public resources.
 - [ ] Runtime API compatibility is reviewed.
 - [ ] Skill version follows semantic versioning.
 

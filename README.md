@@ -11,6 +11,66 @@ Runtime API: `1`
 Create persistent interval, daily or weekly Discord posts through host
 capabilities and the shared Skill Scheduler.
 
+## Quick start
+
+This repository is a standalone Skill package, not a complete Discord bot. It
+requires a compatible GamerHQ Skill Runtime/SDK host.
+
+### Requirements
+
+- Python 3.12 or 3.14;
+- a compatible GamerHQ Skill SDK in the currently supported range
+  `>=0.1,<0.2`;
+- no Discord token or production database is required for local tests.
+
+### Local development
+
+Clone the repository and create an isolated environment:
+
+```bash
+git clone https://github.com/Duy-Phan96/gamerhq-skill-recurring-posts.git
+cd gamerhq-skill-recurring-posts
+python -m venv .venv
+```
+
+Activate the environment using the command for your platform, then install the
+same reviewed SDK commit used by CI. The authoritative pin is the
+`GAMERHQ_SDK_REF` value in `.github/workflows/tests.yml`.
+
+For the current repository state:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install "gamerhq-skill-sdk @ git+https://github.com/Duy-Phan96/GamerHQ.git@843d81e6584d2372a861d12223486bc594f16a3b"
+python -m pip install --no-deps -e .
+python -m pip install pytest==9.1.1
+python -m pip check
+python -m pytest
+```
+
+The test suite is offline/token-free.
+
+### Build the release artifact
+
+```bash
+rm -rf dist
+python -m pip wheel --no-deps . --wheel-dir dist
+```
+
+CI additionally reinstalls the built wheel and verifies that the
+`gamerhq.skills` entry point exposes exactly one Skill named
+`recurring-posts`.
+
+### Consumer installation
+
+Consumers should install a reviewed immutable Skill release/commit through their
+own dependency/release process. Do not treat a moving branch as a production
+dependency.
+
+This repository does not configure or deploy the consuming GamerHQ Host. See
+`RELEASES.md` for this Skill's release process and `PROJECT_STATUS.md` for
+the currently supported dependency state.
+
 ## Capabilities
 
 - `discord.channels.read`

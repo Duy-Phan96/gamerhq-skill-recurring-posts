@@ -10,6 +10,13 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [{name = "GamerHQ"}]
+keywords = ["discord", "automation", "scheduler", "plugins", "skills", "gamerhq"]
+
+[project.urls]
+Homepage = "https://github.com/Duy-Phan96/gamerhq-skill-recurring-posts"
+Repository = "https://github.com/Duy-Phan96/gamerhq-skill-recurring-posts"
+Issues = "https://github.com/Duy-Phan96/gamerhq-skill-recurring-posts/issues"
+Changelog = "https://github.com/Duy-Phan96/gamerhq-skill-recurring-posts/blob/main/CHANGELOG.md"
 
 [project.entry-points."gamerhq.skills"]
 recurring-posts = "gamerhq_skill_recurring_posts:create_skill"
