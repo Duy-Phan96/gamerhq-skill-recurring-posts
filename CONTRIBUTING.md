@@ -41,6 +41,10 @@ Review:
 
 Check existing Issues and Pull Requests before creating duplicate work.
 
+Use the repository's GitHub Issue forms for substantial feature/bug work and the
+PR template for review. The templates mirror the architecture/release checks in
+this document and should be kept lightweight.
+
 ## Branches
 
 Use one focused branch per coherent change.
