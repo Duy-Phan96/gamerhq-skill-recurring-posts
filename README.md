@@ -108,6 +108,7 @@ Before changing behavior, review:
 - `ROADMAP.md` — milestones, priorities, deferred scope and next release direction;
 - `CONTRIBUTING.md` — contributor workflow, testing, dependency and release rules;
 - `RELEASES.md` — repository-local versioning, tagging, GitHub Release and rollback process;
+- `SECURITY.md` — vulnerability reporting, secrets/data handling and Skill security boundaries;
 - `SKILL_DESIGN.md` — architecture and contract inventory;
 - `AGENTS.md` — repository rules for developers and coding agents;
 - `RELEASE_CHECKLIST.md` — release readiness and consumer acceptance guidance.
