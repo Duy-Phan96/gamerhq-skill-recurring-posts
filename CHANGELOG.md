@@ -4,6 +4,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Added `SECURITY.md` covering vulnerability reporting, capability/guild boundaries, secrets/private data, scheduler and Management API safety.
 - Added `RELEASES.md` with semantic versioning, immutable release commit, tag/GitHub Release, dependency, rollback and post-release guidance.
 - Added `CONTRIBUTING.md` with repository boundaries, branch/PR workflow, test expectations, SDK dependency policy and release discipline.
 - Added `PROJECT_STATUS.md` with the verified 1.3.2 implementation, quality status, dependency state, limitations and current priorities.
