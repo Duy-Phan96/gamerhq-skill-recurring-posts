@@ -245,6 +245,8 @@ returned as `preview.nextOccurrence` with:
 - a user-facing label/help string.
 
 This is intentionally **not** presented as the persisted next run of an existing
-Scheduler job. The current public scoped Scheduler contract exposes job mutation
-(`upsert_job` / `remove_job`) but no read-only job lookup. A consumer must not
-treat this preview as authoritative scheduler state.
+Scheduler job. The SDK range currently supported by this Skill (`>=0.1,<0.2`)
+does not expose the read-only Scheduler job lookup needed for authoritative
+persisted state. SDK 0.2.0 adds that public contract upstream, but this repository
+has not intentionally adopted 0.2.x yet. Consumers must therefore continue to
+treat this 1.3.2 preview as non-authoritative.

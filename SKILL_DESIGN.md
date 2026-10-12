@@ -199,7 +199,8 @@ actual persisted job's next execution. For daily/weekly schedules it represents
 the next occurrence from the same reference time, still without claiming access
 to scheduler persistence.
 
-The public scoped Scheduler API currently has no read-only job lookup. Therefore
-this Skill must not fabricate an authoritative "Next run" for existing jobs.
-That missing capability belongs to the Runtime/SDK owner and is handled by
-handoff.
+The SDK range currently supported by this Skill (`>=0.1,<0.2`) has no
+read-only Scheduler job lookup. SDK 0.2.0 now provides a public scoped read
+contract upstream, but Recurring Posts has not yet adopted that dependency.
+Until the planned 1.4.0 work in Issue #14, this Skill must not fabricate an
+authoritative "Next run" for existing jobs.
