@@ -87,7 +87,8 @@ private implementation is allowed.
 
 ## Quality status
 
-The current `main` commit for 1.3.2 passed the repository CI on Python 3.12 and
+The current `main` commit `f0e8b8f250a1125fcfee99def27af905069a7c62`
+contains the reviewed 1.4.0 source and passed repository CI on Python 3.12 and
 Python 3.14.
 
 Latest verified 1.4.0 candidate CI run collected **52 tests** and passed all 52
@@ -126,16 +127,17 @@ Strengths:
 
 Current repository-management gaps:
 
-- package version 1.3.2 exists, but no GitHub Release was found during the
-  2026-10-12 audit;
-- multiple merged feature/docs branches remain in the repository;
-- release tags could not be reliably verified through the available audit tooling.
+- 1.4.0 source is merged and **READY FOR RELEASE**, but the immutable
+  `v1.4.0` tag and GitHub Release still require an explicit repository-owner
+  publication step;
+- multiple merged feature/docs/test branches remain in the repository;
+- release tags cannot be created or verified through the current project connector.
 
 Repository-governance improvements completed after the audit:
 
 - Issue #1 was closed as completed;
 - `ROADMAP.md`, `CONTRIBUTING.md`, `RELEASES.md` and `SECURITY.md` were added;
-- Issue #14 now tracks the 1.4.0 Scheduler-status milestone;
+- Issue #14 was completed by the merged 1.4.0 source;
 - Issue #17 tracks formal GitHub release and branch-cleanup work.
 
 ## Current priorities
