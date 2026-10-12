@@ -103,11 +103,13 @@ marks it non-authoritative.
 
 The required public Scheduler read contract has since been implemented upstream
 in GamerHQ Skill SDK 0.2.0 on the GamerHQ development line. This repository has
-not yet adopted SDK 0.2.x and still declares:
+not yet intentionally adopted SDK 0.2.x and still declares:
 
 `sdk >=0.1,<0.2`
 
-Therefore authoritative Scheduler state is not yet part of the released Skill.
+Therefore authoritative Scheduler state is not yet part of the current Skill
+release. Issue #14 tracks the planned 1.4.0 adoption once 0.2.x is an intended
+consumer dependency.
 
 ### Generic Test Send action rendering
 
@@ -130,10 +132,15 @@ Current repository-management gaps:
 
 - package version 1.3.2 exists, but no GitHub Release was found during the
   2026-10-12 audit;
-- Issue #1 remains open despite its acceptance criteria being implemented;
 - multiple merged feature/docs branches remain in the repository;
-- release tags could not be reliably verified through the available audit tooling;
-- release/dependency policy should be made more explicit before broader third-party adoption.
+- release tags could not be reliably verified through the available audit tooling.
+
+Repository-governance improvements completed after the audit:
+
+- Issue #1 was closed as completed;
+- `ROADMAP.md`, `CONTRIBUTING.md`, `RELEASES.md` and `SECURITY.md` were added;
+- Issue #14 now tracks the 1.4.0 Scheduler-status milestone;
+- Issue #17 tracks formal GitHub release and branch-cleanup work.
 
 ## Current priorities
 
