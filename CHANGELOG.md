@@ -4,6 +4,10 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Added `PROJECT_STATUS.md` with the verified 1.3.2 implementation, quality status, dependency state, limitations and current priorities.
+- Added `ROADMAP.md` with completed milestones, the planned authoritative Scheduler-status milestone, release professionalization and explicitly deferred scope.
+- Recorded repository-health follow-ups from the 2026-10-12 project audit without changing runtime behavior.
+
 ## 1.3.2
 
 - Added `preview.nextOccurrence` to validation responses.
