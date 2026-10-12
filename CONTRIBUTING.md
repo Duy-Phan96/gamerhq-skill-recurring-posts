@@ -158,6 +158,8 @@ Runtime API versioning is separate from Skill package versioning.
 
 ## Release readiness
 
+See `RELEASES.md` for the canonical repository-local release process.
+
 Before a release:
 
 - relevant CI must be green;
