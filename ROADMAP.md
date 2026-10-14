@@ -85,7 +85,7 @@ The authoritative persisted Scheduler-state gap was completed in Milestone 5.
 
 ## Milestone 5 — Authoritative Scheduler Status
 
-**Status:** Completed in 1.4.0 source — publication pending
+**Status:** Completed and released in v1.4.0
 
 **Goal:** Use the public scoped Scheduler read contract to expose authoritative
 runtime scheduling state without Host-private access.
@@ -133,37 +133,25 @@ Completed:
 
 Remaining priorities:
 
-1. publish the reviewed `v1.4.0` tag and verify the automated GitHub Release;
-2. remove merged feature branches where practical;
-3. keep this roadmap and `PROJECT_STATUS.md` current;
-4. keep changelog entries unambiguous and release-scoped.
+1. remove merged feature branches where practical;
+2. keep this roadmap and `PROJECT_STATUS.md` current;
+3. keep changelog entries unambiguous and release-scoped;
+4. collect real consumer feedback before selecting the next feature milestone.
 
 ## Priority backlog
 
-### P1 — Publish Recurring Posts 1.4.0
+### Completed — Recurring Posts v1.4.0
 
-The reviewed SDK 0.2.x dependency and authoritative Scheduler status are
-implemented in the 1.4.0 source line. A tag-driven GitHub Actions workflow now
-owns release artifact validation and GitHub Release creation; the remaining
-owner approval is pushing the exact `v1.4.0` tag from final `main`.
+Released from immutable commit
+`d0f2d87d902f44b2770ad9c99f633577ea3ed44b`.
 
-Acceptance before publication:
+Release validation:
 
-- exact immutable merge commit recorded;
-- Python 3.12/3.14 CI is green;
-- 52 offline/contract/release-metadata tests pass per supported Python version;
-- release wheel build/install and entry-point smoke checks pass;
-- compatibility/dependency statement is current.
-
-### P1 — Create the next formal Skill release
-
-Acceptance:
-
-- exact immutable commit recorded;
-- changelog current;
+- Python 3.12/3.14 CI green;
+- 52 offline/contract/release-metadata tests per supported Python version;
+- release wheel build/install and entry-point smoke checks green;
 - compatibility/dependency statement current;
-- GitHub release notes created;
-- rollback target known.
+- GitHub Release published with wheel and SHA-256 checksum artifact.
 
 ### P2 — Repository hygiene
 

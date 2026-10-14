@@ -15,9 +15,9 @@ Discord messages.
 **Scheduler job key:** `post:<post-id>`  
 **Event:** `recurring-post.sent.v1`
 
-**Maturity:** Beta / release-ready library. SDK 0.2.0 is adopted. The remaining
-owner approval is to create/push the exact `v1.4.0` tag; the repository release
-workflow will then validate and publish the GitHub Release automatically.
+**Maturity:** Beta / released library. Version `v1.4.0` was formally published
+from the reviewed immutable commit `d0f2d87d902f44b2770ad9c99f633577ea3ed44b`
+on 2026-10-14.
 
 ## Verified implementation
 
@@ -128,11 +128,9 @@ Strengths:
 
 Current repository-management gaps:
 
-- 1.4.0 is **READY FOR RELEASE**; the immutable `v1.4.0` tag still requires an
-  explicit repository-owner action, after which the tag-driven workflow publishes
-  the GitHub Release automatically;
 - multiple merged feature/docs/test branches remain in the repository;
-- release tags cannot be created or verified through the current project connector.
+- branch deletion is not exposed by the current project connector and remains an
+  explicit repository-owner cleanup action.
 
 Repository-governance improvements completed after the audit:
 
@@ -143,10 +141,10 @@ Repository-governance improvements completed after the audit:
 
 ## Current priorities
 
-1. push `v1.4.0` from the final reviewed `main` commit and verify the automated GitHub Release;
+1. complete the remaining branch-cleanup portion of Issue #17;
 2. keep the SDK 0.2.x compatibility statement current;
-3. complete Issue #17 release/branch hygiene;
-4. maintain repository hygiene and documentation consistency;
+3. maintain repository hygiene and documentation consistency;
+4. monitor real consumer feedback before expanding scope;
 5. defer new feature expansion until there is demonstrated user demand.
 
 ## Not current scope
