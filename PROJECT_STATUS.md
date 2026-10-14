@@ -15,8 +15,9 @@ Discord messages.
 **Scheduler job key:** `post:<post-id>`  
 **Event:** `recurring-post.sent.v1`
 
-**Maturity:** Beta / release-ready library. SDK 0.2.0 is now adopted; formal
-GitHub release/tag publication remains a repository-owner action.
+**Maturity:** Beta / release-ready library. SDK 0.2.0 is adopted. The remaining
+owner approval is to create/push the exact `v1.4.0` tag; the repository release
+workflow will then validate and publish the GitHub Release automatically.
 
 ## Verified implementation
 
@@ -127,9 +128,9 @@ Strengths:
 
 Current repository-management gaps:
 
-- 1.4.0 source is merged and **READY FOR RELEASE**, but the immutable
-  `v1.4.0` tag and GitHub Release still require an explicit repository-owner
-  publication step;
+- 1.4.0 is **READY FOR RELEASE**; the immutable `v1.4.0` tag still requires an
+  explicit repository-owner action, after which the tag-driven workflow publishes
+  the GitHub Release automatically;
 - multiple merged feature/docs/test branches remain in the repository;
 - release tags cannot be created or verified through the current project connector.
 
@@ -142,7 +143,7 @@ Repository-governance improvements completed after the audit:
 
 ## Current priorities
 
-1. publish the formal 1.4.0 GitHub release/tag from the reviewed immutable commit;
+1. push `v1.4.0` from the final reviewed `main` commit and verify the automated GitHub Release;
 2. keep the SDK 0.2.x compatibility statement current;
 3. complete Issue #17 release/branch hygiene;
 4. maintain repository hygiene and documentation consistency;
