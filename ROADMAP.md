@@ -133,7 +133,7 @@ Completed:
 
 Remaining priorities:
 
-1. publish reviewed GitHub releases/tags for stable Skill versions;
+1. publish the reviewed `v1.4.0` tag and verify the automated GitHub Release;
 2. remove merged feature branches where practical;
 3. keep this roadmap and `PROJECT_STATUS.md` current;
 4. keep changelog entries unambiguous and release-scoped.
@@ -143,7 +143,9 @@ Remaining priorities:
 ### P1 — Publish Recurring Posts 1.4.0
 
 The reviewed SDK 0.2.x dependency and authoritative Scheduler status are
-implemented in the 1.4.0 source line.
+implemented in the 1.4.0 source line. A tag-driven GitHub Actions workflow now
+owns release artifact validation and GitHub Release creation; the remaining
+owner approval is pushing the exact `v1.4.0` tag from final `main`.
 
 Acceptance before publication:
 

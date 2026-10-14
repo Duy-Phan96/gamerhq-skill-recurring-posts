@@ -65,6 +65,9 @@ Use this before tagging or pinning a release of `gamerhq-skill-recurring-posts`.
 - [ ] SDK dependency is pinned to a reviewed compatible release/commit.
 - [ ] Supported SDK range matches the README compatibility matrix and CI pin.
 - [ ] Package source/release is immutable and reviewable.
+- [ ] Final version tag will point to the current reviewed `main` commit.
+- [ ] No additional merge is planned between final validation and tag creation.
+- [ ] Tag-driven GitHub Release workflow is present and reviewed.
 - [ ] Changelog/release notes describe user-visible changes.
 - [ ] Release status is reported for this repository only.
 - [ ] Any consumer integration/deployment work is reported as a handoff, not implemented here.

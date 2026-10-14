@@ -138,6 +138,28 @@ Record the resulting immutable merge/squash commit SHA.
 
 The immutable commit is the source reference consumers may pin.
 
+## Automated GitHub publication
+
+This repository contains `.github/workflows/release.yml`.
+
+Publication is intentionally tag-driven. When the repository owner pushes a
+version tag matching `v*`, the workflow:
+
+1. verifies the tag exactly matches the package version;
+2. verifies the tag points to the current `main` commit;
+3. installs the reviewed GamerHQ Skill SDK pin;
+4. builds the release wheel;
+5. reinstalls and smoke-tests the wheel/entry point;
+6. extracts the matching version section from `CHANGELOG.md`;
+7. generates SHA-256 checksums;
+8. creates the GitHub Release and attaches the wheel/checksum file.
+
+The workflow does **not** create the tag itself. Tag creation remains the
+deliberate repository-owner approval step.
+
+Do not merge additional changes between final release validation and tag
+creation, because the workflow requires the tag to point at current `main`.
+
 ## Tagging
 
 Create an annotated version tag from the exact reviewed release commit.
@@ -161,7 +183,11 @@ Do not move an existing published version tag.
 
 ## GitHub Release
 
-Create a GitHub Release from the version tag.
+For normal releases, pushing the reviewed version tag triggers the repository's
+release workflow, which creates the GitHub Release automatically.
+
+If automation is unavailable, create the GitHub Release manually from the same
+verified tag using the requirements below.
 
 Release notes should include:
 
