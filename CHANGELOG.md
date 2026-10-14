@@ -7,6 +7,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 - Refreshed release-readiness status after merging the reviewed 1.4.0 source: main commit, completed Scheduler milestone, Issue #14 completion and remaining manual publication/branch-cleanup work are now documented consistently.
 ## 1.4.0
 
+- Added a tag-driven GitHub Release workflow that validates tag/version/current-main alignment, builds and smoke-tests the wheel, extracts release notes from this changelog, generates SHA-256 checksums and publishes the release artifacts.
 - Adopted reviewed GamerHQ Skill SDK 0.2.0 with supported range `>=0.2,<0.3`.
 - Added authoritative, non-persisted `schedulerStatus` metadata to recurring-post Management responses.
 - Exposes safe scheduler job key, next run, last run, failure count and revision without payload/lease/claim-token data.
