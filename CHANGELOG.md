@@ -4,6 +4,7 @@ All notable changes to `gamerhq-skill-recurring-posts` are documented here.
 
 ## Unreleased
 
+- Refreshed post-release project status on 2026-10-22 after verifying a clean GitHub state: no open Issues or Pull Requests, only `main` remains as a remote branch, and v1.4.0 remains the latest published release.
 - Marked v1.4.0 as formally released after verifying the annotated tag, immutable commit, GitHub Release, wheel artifact and SHA-256 checksum artifact.
 - Refreshed release-readiness status after merging the reviewed 1.4.0 source: main commit, completed Scheduler milestone, Issue #14 completion and remaining manual publication/branch-cleanup work are now documented consistently.
 ## 1.4.0
