@@ -1,6 +1,6 @@
 # Project Status — Recurring Posts
 
-_Last reviewed: 2026-10-12_
+_Last reviewed: 2026-10-22_
 
 ## Executive status
 
@@ -88,9 +88,9 @@ private implementation is allowed.
 
 ## Quality status
 
-The current `main` commit `f0e8b8f250a1125fcfee99def27af905069a7c62`
-contains the reviewed 1.4.0 source and passed repository CI on Python 3.12 and
-Python 3.14.
+The current `main` commit `b3d418fadc66565491965442ebb7c403109b6af7`
+contains the post-release status documentation on top of the immutable
+`v1.4.0` release commit and passes repository CI on Python 3.12 and Python 3.14.
 
 Latest verified 1.4.0 candidate CI run collected **52 tests** and passed all 52
 on both supported Python versions, including release-wheel build/install and
@@ -128,23 +128,22 @@ Strengths:
 
 Current repository-management gaps:
 
-- multiple merged feature/docs/test branches remain in the repository;
-- branch deletion is not exposed by the current project connector and remains an
-  explicit repository-owner cleanup action.
+- none currently tracked.
 
 Repository-governance improvements completed after the audit:
 
 - Issue #1 was closed as completed;
 - `ROADMAP.md`, `CONTRIBUTING.md`, `RELEASES.md` and `SECURITY.md` were added;
 - Issue #14 was completed by the merged 1.4.0 source;
-- Issue #17 tracks formal GitHub release and branch-cleanup work.
+- Issue #17 was completed after release publication and branch cleanup;
+- Issue #31 was completed after pruning all stale merged branches.
 
 ## Current priorities
 
-1. complete the remaining branch-cleanup portion of Issue #17;
-2. keep the SDK 0.2.x compatibility statement current;
-3. maintain repository hygiene and documentation consistency;
-4. monitor real consumer feedback before expanding scope;
+1. keep the SDK 0.2.x compatibility statement current;
+2. maintain repository hygiene and documentation consistency;
+3. monitor real consumer feedback before expanding scope;
+4. keep the release workflow healthy for the next version;
 5. defer new feature expansion until there is demonstrated user demand.
 
 ## Not current scope
@@ -168,3 +167,14 @@ This repository owns only Recurring Posts.
 Changes required in GamerHQ Host, the public Runtime/SDK implementation,
 gamerhq-web, or another Skill must be handled through public contracts and
 handoffs. A release here does not imply a GamerHQ production deployment.
+
+
+## Current GitHub state
+
+Verified on 2026-10-22:
+
+- open Issues: 0;
+- open Pull Requests: 0;
+- remote branches: `main` only;
+- latest release: `v1.4.0`;
+- release status: published, not draft, not prerelease.

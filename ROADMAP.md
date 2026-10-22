@@ -116,7 +116,7 @@ Non-goals:
 
 ## Milestone 6 — Release & Repository Professionalization
 
-**Status:** In Progress
+**Status:** Completed
 
 **Goal:** Make the repository as clear to external developers and reviewers as
 the implementation already is.
@@ -131,12 +131,21 @@ Completed:
 - completed Issue #14 with the 1.4.0 authoritative Scheduler-status implementation;
 - created Issue #17 for formal release/branch hygiene.
 
-Remaining priorities:
+Completed:
 
-1. remove merged feature branches where practical;
-2. keep this roadmap and `PROJECT_STATUS.md` current;
-3. keep changelog entries unambiguous and release-scoped;
-4. collect real consumer feedback before selecting the next feature milestone.
+- repository status and roadmap established;
+- contributing, release and security documentation added;
+- GitHub Issue/PR templates added;
+- automated release workflow added;
+- v1.4.0 published;
+- stale merged branches pruned;
+- completed release/hygiene Issues closed.
+
+Ongoing maintenance:
+
+1. keep this roadmap and `PROJECT_STATUS.md` current;
+2. keep changelog entries unambiguous and release-scoped;
+3. collect real consumer feedback before selecting the next feature milestone.
 
 ## Priority backlog
 
@@ -153,10 +162,13 @@ Release validation:
 - compatibility/dependency statement current;
 - GitHub Release published with wheel and SHA-256 checksum artifact.
 
-### P2 — Repository hygiene
+### Completed — Repository hygiene
 
-- prune merged branches where supported;
-- keep status/roadmap synchronized with releases.
+- stale merged branches pruned;
+- open Issues: 0;
+- open Pull Requests: 0;
+- only `main` remains as a remote branch;
+- status/roadmap synchronized after v1.4.0.
 
 ### P3 — Optional future improvements
 
